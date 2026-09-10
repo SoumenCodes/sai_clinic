@@ -43,14 +43,21 @@ import {
 const CLINIC_NAME = "Sai Homoeo Clinic";
 const DOCTOR_NAME = "Dr. S. K. Sharma";
 const DOCTOR_DEGREE = "B.H.M.S (Classical Homoeopathy)";
-const CLINIC_ADDRESS = "Near Ramni Kali Mandir, Baridih, Jamshedpur - 831017, Jharkhand";
+const CLINIC_ADDRESS =
+  "Near Ramni Kali Mandir, Baridih, Jamshedpur - 831017, Jharkhand";
 const CLINIC_PHONE = "+91 98765 43210";
 const WHATSAPP_NUMBER = "919876543210";
 
 const DIRECTIONS_URL =
   "https://www.google.com/maps/search/?api=1&query=Sai+Homoeo+Clinic%2C+Near+Ramni+Kali+Mandir%2C+Baridih%2C+Jamshedpur%2C+Jharkhand+831017";
 
-function WhatsAppIcon({ size = 20, className = "" }: { size?: number; className?: string }) {
+function WhatsAppIcon({
+  size = 20,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <svg
       width={size}
@@ -169,13 +176,25 @@ export default function HomePage() {
       try {
         const settings = getLocalSettings();
         const bookedTimes = await getBookedSlotsForDate(selectedDate);
-        const generated = generateSlotsForDate(selectedDate, settings, bookedTimes);
+        const generated = generateSlotsForDate(
+          selectedDate,
+          settings,
+          bookedTimes,
+        );
         setSlots(generated);
 
         // Auto-select first available slot if previous is not available
-        const firstAvailable = generated.find((s) => !s.isBooked && !s.isPassed);
+        const firstAvailable = generated.find(
+          (s) => !s.isBooked && !s.isPassed,
+        );
         setSelectedSlot((prev) => {
-          if (prev && generated.some((s) => s.startTime === prev.startTime && !s.isBooked && !s.isPassed)) {
+          if (
+            prev &&
+            generated.some(
+              (s) =>
+                s.startTime === prev.startTime && !s.isBooked && !s.isPassed,
+            )
+          ) {
             return prev;
           }
           return firstAvailable || null;
@@ -202,7 +221,9 @@ export default function HomePage() {
     }
 
     if (!patientData.phone || patientData.phone.trim().length < 8) {
-      setBookingError("Please provide a valid mandatory phone number for appointment confirmation.");
+      setBookingError(
+        "Please provide a valid mandatory phone number for appointment confirmation.",
+      );
       return;
     }
 
@@ -228,7 +249,9 @@ export default function HomePage() {
     if (res.success) {
       setBookingSubmitted(true);
     } else {
-      setBookingError(res.error || "Failed to book slot. Please pick another available time.");
+      setBookingError(
+        res.error || "Failed to book slot. Please pick another available time.",
+      );
       // Refresh slots
       const settings = getLocalSettings();
       const bookedTimes = await getBookedSlotsForDate(selectedDate);
@@ -241,7 +264,9 @@ export default function HomePage() {
       patientData.problem === "Other"
         ? customProblem.trim() || "Other Health Concern"
         : patientData.problem;
-    const slotLabel = selectedSlot ? `${selectedSlot.timeLabel} (${selectedSlot.displayLabel})` : "Preferred Slot";
+    const slotLabel = selectedSlot
+      ? `${selectedSlot.timeLabel} (${selectedSlot.displayLabel})`
+      : "Preferred Slot";
     const formattedDate = formatDateDisplay(selectedDate);
     const message = `Hello Sai Homoeo Clinic! I booked a 15-minute consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A🎂 *Age:* ${patientData.age || "N/A"}%0A🩺 *Health Concern:* ${effectiveProblem}%0A📅 *Date:* ${formattedDate}%0A⏰ *Time Slot:* ${slotLabel}%0A📍 *Mode:* ${patientData.visitType === "in-clinic" ? "In-Clinic (Baridih)" : "Online Consult"}%0A%0APlease confirm my appointment.`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
@@ -261,8 +286,12 @@ export default function HomePage() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
             <span className="font-bold text-white shrink-0">Open Today:</span>
-            <span className="text-emerald-200 truncate">10 AM–2 PM &amp; 5 PM–10 PM</span>
-            <span className="text-emerald-300 font-medium hidden md:inline">• Baridih, Jamshedpur</span>
+            <span className="text-emerald-200 truncate">
+              10 AM–2 PM &amp; 5 PM–10 PM
+            </span>
+            <span className="text-emerald-300 font-medium hidden md:inline">
+              • Baridih, Jamshedpur
+            </span>
           </div>
           <div className="flex items-center gap-3 text-[11px] sm:text-xs shrink-0">
             <a
@@ -291,7 +320,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
           <a href="#" className="flex items-center gap-2.5 sm:gap-3 group">
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-800 text-white flex items-center justify-center font-extrabold text-lg sm:text-xl shadow-md shadow-emerald-700/20 group-hover:scale-105 transition shrink-0">
-              <Sparkles size={18} className="text-amber-300 sm:w-[22px] sm:h-[22px]" />
+              <Sparkles
+                size={18}
+                className="text-amber-300 sm:w-[22px] sm:h-[22px]"
+              />
             </div>
             <div>
               <div className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
@@ -300,14 +332,19 @@ export default function HomePage() {
               <div className="text-[10px] sm:text-[11px] font-semibold text-emerald-700 uppercase tracking-wider mt-0.5 flex items-center gap-1.5 flex-wrap">
                 <span>Classical Homoeopathy</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
-                <span className="text-slate-500 font-normal hidden sm:inline-block">Baridih, Jamshedpur</span>
+                <span className="text-slate-500 font-normal hidden sm:inline-block">
+                  Baridih, Jamshedpur
+                </span>
               </div>
             </div>
           </a>
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-700">
-            <a href="#specialties" className="hover:text-emerald-700 transition">
+            <a
+              href="#specialties"
+              className="hover:text-emerald-700 transition"
+            >
               Treatments
             </a>
             <a href="#dispensary" className="hover:text-emerald-700 transition">
@@ -455,8 +492,12 @@ export default function HomePage() {
                         <Stethoscope size={12} />
                         <span>Chief Homoeopath</span>
                       </div>
-                      <h3 className="text-base sm:text-xl font-extrabold leading-tight text-white">{DOCTOR_NAME}</h3>
-                      <p className="text-[11px] sm:text-xs text-emerald-200 font-medium">{DOCTOR_DEGREE} • Sai Homoeo Clinic</p>
+                      <h3 className="text-base sm:text-xl font-extrabold leading-tight text-white">
+                        {DOCTOR_NAME}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-emerald-200 font-medium">
+                        {DOCTOR_DEGREE} • Sai Homoeo Clinic
+                      </p>
                     </div>
                   </div>
 
@@ -467,8 +508,12 @@ export default function HomePage() {
                         📍
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-900 leading-tight">Near Ramni Kali Mandir</div>
-                        <div className="text-[10px] text-slate-500">Baridih, Jamshedpur</div>
+                        <div className="text-xs font-bold text-slate-900 leading-tight">
+                          Near Ramni Kali Mandir
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          Baridih, Jamshedpur
+                        </div>
                       </div>
                     </div>
                     <a
@@ -491,26 +536,45 @@ export default function HomePage() {
                 </div>
 
                 <h1 className="text-2xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.18] sm:leading-[1.14]">
-                  Natural Care <span className="text-gradient">for Your Family</span>
+                  Natural Care{" "}
+                  <span className="text-gradient">for Your Family</span>
                 </h1>
 
                 <p className="text-slate-600 text-xs sm:text-lg leading-relaxed max-w-2xl font-normal">
-                  Personalized homoeopathic care for long-term health and chronic conditions, with a gentle and natural approach.
+                  Personalized homoeopathic care for long-term health and
+                  chronic conditions, with a gentle and natural approach.
                 </p>
 
                 {/* 3 Quick Bullets */}
                 <div className="w-full space-y-2 text-xs sm:text-sm text-slate-700 font-medium">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                    <span>Detailed Constitutional Consultation &amp; 15-Minute Dedicated Slots</span>
+                    <CheckCircle2
+                      size={15}
+                      className="text-emerald-600 shrink-0"
+                    />
+                    <span>
+                      Detailed Constitutional Consultation &amp; 15-Minute
+                      Dedicated Slots
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                    <span>Safe for All Ages (Infants, Adults &amp; Elderly) with Zero Side Effects</span>
+                    <CheckCircle2
+                      size={15}
+                      className="text-emerald-600 shrink-0"
+                    />
+                    <span>
+                      Safe for All Ages (Infants, Adults &amp; Elderly) with
+                      Zero Side Effects
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
-                    <span>Original German Schwabe &amp; Reckeweg Formulations</span>
+                    <CheckCircle2
+                      size={15}
+                      className="text-emerald-600 shrink-0"
+                    />
+                    <span>
+                      Original German Schwabe &amp; Reckeweg Formulations
+                    </span>
                   </div>
                 </div>
 
@@ -554,7 +618,8 @@ export default function HomePage() {
                 Conditions We Treat
               </h2>
               <p className="text-slate-600 text-xs sm:text-base">
-                Classical homoeopathy effectively cures both chronic and acute conditions by stimulating your body's self-healing mechanisms.
+                Classical homoeopathy effectively cures both chronic and acute
+                conditions by stimulating your body's self-healing mechanisms.
               </p>
             </div>
 
@@ -577,13 +642,20 @@ export default function HomePage() {
                         </span>
                       </div>
 
-                      <h3 className="text-xs sm:text-base font-extrabold text-slate-900 mb-1 leading-tight">{item.title}</h3>
-                      <p className="text-[10px] sm:text-xs text-slate-600 leading-snug sm:leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-none">{item.conditions}</p>
+                      <h3 className="text-xs sm:text-base font-extrabold text-slate-900 mb-1 leading-tight">
+                        {item.title}
+                      </h3>
+                      <p className="text-[10px] sm:text-xs text-slate-600 leading-snug sm:leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-none">
+                        {item.conditions}
+                      </p>
                     </div>
 
                     <button
                       onClick={() => {
-                        setPatientData((prev) => ({ ...prev, problem: item.title }));
+                        setPatientData((prev) => ({
+                          ...prev,
+                          problem: item.title,
+                        }));
                         setBookingSubmitted(false);
                         setBookingModalOpen(true);
                       }}
@@ -600,7 +672,10 @@ export default function HomePage() {
         </section>
 
         {/* 5. IN-HOUSE DISPENSARY & MEDICINE SHELVES */}
-        <section id="dispensary" className="py-12 sm:py-24 bg-slate-900 text-white relative overflow-hidden">
+        <section
+          id="dispensary"
+          className="py-12 sm:py-24 bg-slate-900 text-white relative overflow-hidden"
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">
               {/* Left Details */}
@@ -610,32 +685,61 @@ export default function HomePage() {
                   <span>IN-HOUSE DISPENSARY</span>
                 </div>
                 <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-                  Medicine Shelves &amp; Tinctures: <span className="text-emerald-400">Pure German Formulations</span>
+                  Medicine Shelves &amp; Tinctures:{" "}
+                  <span className="text-emerald-400">
+                    Pure German Formulations
+                  </span>
                 </h2>
                 <p className="text-slate-300 text-xs sm:text-base leading-relaxed">
-                  We maintain a fully stocked dispensary of genuine mother tinctures, biochemic tissue salts, and high-potency dilutions to ensure immediate availability and 100% purity.
+                  We maintain a fully stocked dispensary of genuine mother
+                  tinctures, biochemic tissue salts, and high-potency dilutions
+                  to ensure immediate availability and 100% purity.
                 </p>
 
                 <div className="space-y-2.5 sm:space-y-3 pt-1 sm:pt-2">
                   <div className="flex items-start gap-2.5 sm:gap-3">
-                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <CheckCircle2
+                      size={16}
+                      className="text-emerald-400 shrink-0 mt-0.5"
+                    />
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">Genuine Seal-Packed Brands</h4>
-                      <p className="text-[11px] sm:text-xs text-slate-400">Dr. Willmar Schwabe Germany, Reckeweg, Adel &amp; SBL World Class.</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-white">
+                        Genuine Seal-Packed Brands
+                      </h4>
+                      <p className="text-[11px] sm:text-xs text-slate-400">
+                        Dr. Willmar Schwabe Germany, Reckeweg, Adel &amp; SBL
+                        World Class.
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5 sm:gap-3">
-                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <CheckCircle2
+                      size={16}
+                      className="text-emerald-400 shrink-0 mt-0.5"
+                    />
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">Customized On-Spot Dispensing</h4>
-                      <p className="text-[11px] sm:text-xs text-slate-400">Remedies hygienically prepared in pure sugar globules or liquid drops.</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-white">
+                        Customized On-Spot Dispensing
+                      </h4>
+                      <p className="text-[11px] sm:text-xs text-slate-400">
+                        Remedies hygienically prepared in pure sugar globules or
+                        liquid drops.
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5 sm:gap-3">
-                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <CheckCircle2
+                      size={16}
+                      className="text-emerald-400 shrink-0 mt-0.5"
+                    />
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">Direct Availability at Clinic</h4>
-                      <p className="text-[11px] sm:text-xs text-slate-400">No outside running—receive your complete prescription immediately.</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-white">
+                        Direct Availability at Clinic
+                      </h4>
+                      <p className="text-[11px] sm:text-xs text-slate-400">
+                        No outside running—receive your complete prescription
+                        immediately.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -682,7 +786,10 @@ export default function HomePage() {
         </section>
 
         {/* 6. MEET CHIEF CONSULTANT */}
-        <section id="doctor" className="py-12 sm:py-24 bg-white border-b border-slate-200/80">
+        <section
+          id="doctor"
+          className="py-12 sm:py-24 bg-white border-b border-slate-200/80"
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center">
               {/* Doctor Portrait */}
@@ -696,8 +803,12 @@ export default function HomePage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none"></div>
                     <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 text-white">
-                      <div className="text-xs sm:text-sm font-bold text-emerald-300">Sai Homoeo Clinic • Baridih</div>
-                      <div className="text-base sm:text-lg font-black">{DOCTOR_NAME}</div>
+                      <div className="text-xs sm:text-sm font-bold text-emerald-300">
+                        Sai Homoeo Clinic • Baridih
+                      </div>
+                      <div className="text-base sm:text-lg font-black">
+                        {DOCTOR_NAME}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -717,7 +828,10 @@ export default function HomePage() {
                 </p>
 
                 <p className="text-slate-600 text-xs sm:text-base leading-relaxed">
-                  "Every patient is unique. At Sai Homoeo Clinic, we take the time to understand your complete case history to prescribe the precise constitutional simillimum that brings permanent healing."
+                  "Every patient is unique. At Sai Homoeo Clinic, we take the
+                  time to understand your complete case history to prescribe the
+                  precise constitutional simillimum that brings permanent
+                  healing."
                 </p>
 
                 <div className="grid sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1 sm:pt-2">
@@ -726,14 +840,18 @@ export default function HomePage() {
                       <CheckCircle2 size={14} className="text-emerald-600" />
                       <span>Individualized Case Study</span>
                     </div>
-                    <p className="text-[10px] sm:text-[11px] text-slate-600">Dedicated 15-minute slot for constitutional evaluation.</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-600">
+                      Dedicated 15-minute slot for constitutional evaluation.
+                    </p>
                   </div>
                   <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                     <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5 mb-1">
                       <CheckCircle2 size={14} className="text-emerald-600" />
                       <span>Zero Side Effects</span>
                     </div>
-                    <p className="text-[10px] sm:text-[11px] text-slate-600">Pure natural dilutions with no chemical toxicity.</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-600">
+                      Pure natural dilutions with no chemical toxicity.
+                    </p>
                   </div>
                 </div>
 
@@ -783,9 +901,15 @@ export default function HomePage() {
                         <MapPin size={16} />
                       </div>
                       <div>
-                        <div className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">Address</div>
-                        <div className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5">{CLINIC_NAME}</div>
-                        <p className="text-[11px] sm:text-xs text-slate-600 mt-1">{CLINIC_ADDRESS}</p>
+                        <div className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase">
+                          Address
+                        </div>
+                        <div className="text-xs sm:text-sm font-bold text-slate-900 mt-0.5">
+                          {CLINIC_NAME}
+                        </div>
+                        <p className="text-[11px] sm:text-xs text-slate-600 mt-1">
+                          {CLINIC_ADDRESS}
+                        </p>
                         <div className="mt-2 inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded">
                           <span>Landmark:</span> Near Ramni Kali Mandir
                         </div>
@@ -801,16 +925,25 @@ export default function HomePage() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="p-2 sm:p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-400">Shift 1 (Morning)</div>
-                        <div className="font-extrabold text-slate-800 text-[11px] sm:text-xs mt-0.5">10:00 AM – 2:00 PM</div>
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-400">
+                          Shift 1 (Morning)
+                        </div>
+                        <div className="font-extrabold text-slate-800 text-[11px] sm:text-xs mt-0.5">
+                          10:00 AM – 2:00 PM
+                        </div>
                       </div>
                       <div className="p-2 sm:p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-400">Shift 2 (Evening)</div>
-                        <div className="font-extrabold text-slate-800 text-[11px] sm:text-xs mt-0.5">5:00 PM – 10:00 PM</div>
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-400">
+                          Shift 2 (Evening)
+                        </div>
+                        <div className="font-extrabold text-slate-800 text-[11px] sm:text-xs mt-0.5">
+                          5:00 PM – 10:00 PM
+                        </div>
                       </div>
                     </div>
                     <div className="text-[10px] sm:text-[11px] text-emerald-800 font-semibold bg-emerald-50 p-2 rounded-lg text-center">
-                      Sunday: 10:00 AM – 1:00 PM (Prior slot booking recommended)
+                      Sunday: 10:00 AM – 1:00 PM (Prior slot booking
+                      recommended)
                     </div>
                   </div>
                 </div>
@@ -831,7 +964,9 @@ export default function HomePage() {
                 <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-emerald-600 text-white flex items-center justify-center mb-3 sm:mb-4 shadow-lg shadow-emerald-600/30">
                   <MapPin size={24} className="sm:w-8 sm:h-8" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-black text-white">{CLINIC_NAME}</h3>
+                <h3 className="text-lg sm:text-xl font-black text-white">
+                  {CLINIC_NAME}
+                </h3>
                 <p className="text-[11px] sm:text-xs text-slate-300 mt-1 max-w-sm">
                   Near Ramni Kali Mandir, Baridih Main Road, Jamshedpur - 831017
                 </p>
@@ -849,14 +984,19 @@ export default function HomePage() {
         </section>
 
         {/* 8. FAQS */}
-        <section id="faq" className="py-12 sm:py-24 bg-white border-t border-slate-200/80">
+        <section
+          id="faq"
+          className="py-12 sm:py-24 bg-white border-t border-slate-200/80"
+        >
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-8 sm:mb-10">
               <div className="badge-pill bg-emerald-100 text-emerald-800 mb-2">
                 <ShieldCheck size={13} />
                 <span>FREQUENT QUESTIONS</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Patient FAQs</h2>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Patient FAQs
+              </h2>
             </div>
 
             <div className="space-y-2.5 sm:space-y-3">
@@ -896,7 +1036,9 @@ export default function HomePage() {
       <footer className="bg-slate-950 text-slate-400 text-xs py-8 sm:py-10 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <div className="font-bold text-white text-sm">Sai Homoeo Clinic</div>
+            <div className="font-bold text-white text-sm">
+              Sai Homoeo Clinic
+            </div>
             <div className="text-[11px] text-slate-500 mt-0.5">
               Near Ramni Kali Mandir, Baridih, Jamshedpur - 831017, Jharkhand
             </div>
@@ -904,9 +1046,12 @@ export default function HomePage() {
           <div className="flex items-center gap-4 text-[11px] text-slate-500">
             <span>&copy; {new Date().getFullYear()} Sai Homoeo Clinic.</span>
             <span>•</span>
-            <Link href="/admin" className="hover:text-emerald-400 font-semibold flex items-center gap-1">
+            <Link
+              href="/doctor"
+              className="hover:text-emerald-400 font-semibold flex items-center gap-1"
+            >
               <Lock size={12} />
-              <span>Doctor Admin</span>
+              <span>Doctor Portal</span>
             </Link>
           </div>
         </div>
@@ -915,7 +1060,9 @@ export default function HomePage() {
       {/* 10. STICKY MOBILE BOTTOM ACTION BAR */}
       <div
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl px-3 py-2 flex items-center justify-between gap-2"
-        style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom, 0.5rem))" }}
+        style={{
+          paddingBottom: "max(0.5rem, env(safe-area-inset-bottom, 0.5rem))",
+        }}
       >
         <a
           href={`tel:${CLINIC_PHONE.replace(/\s+/g, "")}`}
@@ -939,10 +1086,10 @@ export default function HomePage() {
           href={DIRECTIONS_URL}
           target="_blank"
           rel="noreferrer"
-          className="flex-1 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition"
+          className="flex-1 h-11 rounded-xl bg-black hover:bg-slate-200 text-slate-900 font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition"
         >
-          <Navigation size={15} className="text-emerald-700" />
-          <span className="text-[10px]">Map</span>
+          <Navigation size={15} className="text-white" />
+          <span className="text-[10px] text-white">Map</span>
         </a>
 
         <button
@@ -983,7 +1130,9 @@ export default function HomePage() {
                     <Clock size={13} />
                     <span>15-MINUTE SLOT BOOKING</span>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">Choose Date &amp; Available Slot</h3>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">
+                    Choose Date &amp; Available Slot
+                  </h3>
                   <p className="text-xs text-slate-500">
                     Dr. S. K. Sharma • Shift 1: 10AM-2PM | Shift 2: 5PM-10PM
                   </p>
@@ -1002,7 +1151,8 @@ export default function HomePage() {
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                       <span>1. Select Consultation Date *</span>
                       <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
-                        {formatDateDisplay(selectedDate)} ({formatDateWithDay(selectedDate).split(",")[0]})
+                        {formatDateDisplay(selectedDate)} (
+                        {formatDateWithDay(selectedDate).split(",")[0]})
                       </span>
                     </label>
 
@@ -1017,7 +1167,9 @@ export default function HomePage() {
                         }`}
                       >
                         <span>Today</span>
-                        <span className="text-[10px] font-normal opacity-90">{formatDateDisplay(todayDateStr)}</span>
+                        <span className="text-[10px] font-normal opacity-90">
+                          {formatDateDisplay(todayDateStr)}
+                        </span>
                       </button>
                       <button
                         type="button"
@@ -1057,7 +1209,9 @@ export default function HomePage() {
                     </label>
 
                     {loadingSlots ? (
-                      <div className="py-6 text-center text-xs text-slate-400">Loading live availability...</div>
+                      <div className="py-6 text-center text-xs text-slate-400">
+                        Loading live availability...
+                      </div>
                     ) : (
                       <div className="space-y-3 max-h-48 overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
                         {/* Morning Shift Slots */}
@@ -1069,8 +1223,10 @@ export default function HomePage() {
                             </div>
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                               {morningSlots.map((slot, idx) => {
-                                const isSelected = selectedSlot?.startTime === slot.startTime;
-                                const isUnavailable = slot.isBooked || slot.isPassed;
+                                const isSelected =
+                                  selectedSlot?.startTime === slot.startTime;
+                                const isUnavailable =
+                                  slot.isBooked || slot.isPassed;
 
                                 return (
                                   <button
@@ -1082,13 +1238,17 @@ export default function HomePage() {
                                       isSelected
                                         ? "bg-emerald-700 text-white shadow-md scale-98"
                                         : isUnavailable
-                                        ? "bg-slate-200/70 text-slate-400 cursor-not-allowed line-through"
-                                        : "bg-white hover:bg-emerald-50 text-slate-800 border border-slate-200 hover:border-emerald-300"
+                                          ? "bg-slate-200/70 text-slate-400 cursor-not-allowed line-through"
+                                          : "bg-white hover:bg-emerald-50 text-slate-800 border border-slate-200 hover:border-emerald-300"
                                     }`}
                                   >
                                     <span>{slot.timeLabel}</span>
                                     <span className="text-[9px] font-normal opacity-80">
-                                      {slot.isBooked ? "Booked" : slot.isPassed ? "Passed" : "Available"}
+                                      {slot.isBooked
+                                        ? "Booked"
+                                        : slot.isPassed
+                                          ? "Passed"
+                                          : "Available"}
                                     </span>
                                   </button>
                                 );
@@ -1106,8 +1266,10 @@ export default function HomePage() {
                             </div>
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                               {eveningSlots.map((slot, idx) => {
-                                const isSelected = selectedSlot?.startTime === slot.startTime;
-                                const isUnavailable = slot.isBooked || slot.isPassed;
+                                const isSelected =
+                                  selectedSlot?.startTime === slot.startTime;
+                                const isUnavailable =
+                                  slot.isBooked || slot.isPassed;
 
                                 return (
                                   <button
@@ -1119,13 +1281,17 @@ export default function HomePage() {
                                       isSelected
                                         ? "bg-emerald-700 text-white shadow-md scale-98"
                                         : isUnavailable
-                                        ? "bg-slate-200/70 text-slate-400 cursor-not-allowed line-through"
-                                        : "bg-white hover:bg-emerald-50 text-slate-800 border border-slate-200 hover:border-emerald-300"
+                                          ? "bg-slate-200/70 text-slate-400 cursor-not-allowed line-through"
+                                          : "bg-white hover:bg-emerald-50 text-slate-800 border border-slate-200 hover:border-emerald-300"
                                     }`}
                                   >
                                     <span>{slot.timeLabel}</span>
                                     <span className="text-[9px] font-normal opacity-80">
-                                      {slot.isBooked ? "Booked" : slot.isPassed ? "Passed" : "Available"}
+                                      {slot.isBooked
+                                        ? "Booked"
+                                        : slot.isPassed
+                                          ? "Passed"
+                                          : "Available"}
                                     </span>
                                   </button>
                                 );
@@ -1140,7 +1306,10 @@ export default function HomePage() {
                   {/* STEP 3: PATIENT MANDATORY DETAILS */}
                   <div className="space-y-3 pt-1 border-t border-slate-100">
                     <div>
-                      <label htmlFor={nameInputId} className="block text-xs font-bold text-slate-800 mb-1">
+                      <label
+                        htmlFor={nameInputId}
+                        className="block text-xs font-bold text-slate-800 mb-1"
+                      >
                         Patient Full Name *
                       </label>
                       <input
@@ -1149,14 +1318,22 @@ export default function HomePage() {
                         type="text"
                         placeholder="e.g. Ramesh Kumar"
                         value={patientData.name}
-                        onChange={(e) => setPatientData({ ...patientData, name: e.target.value })}
+                        onChange={(e) =>
+                          setPatientData({
+                            ...patientData,
+                            name: e.target.value,
+                          })
+                        }
                         className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor={phoneInputId} className="block text-xs font-bold text-slate-800 mb-1">
+                        <label
+                          htmlFor={phoneInputId}
+                          className="block text-xs font-bold text-slate-800 mb-1"
+                        >
                           Phone Number (Mandatory) *
                         </label>
                         <input
@@ -1165,12 +1342,20 @@ export default function HomePage() {
                           type="tel"
                           placeholder="e.g. 9876543210"
                           value={patientData.phone}
-                          onChange={(e) => setPatientData({ ...patientData, phone: e.target.value })}
+                          onChange={(e) =>
+                            setPatientData({
+                              ...patientData,
+                              phone: e.target.value,
+                            })
+                          }
                           className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
                         />
                       </div>
                       <div>
-                        <label htmlFor={ageInputId} className="block text-xs font-bold text-slate-800 mb-1">
+                        <label
+                          htmlFor={ageInputId}
+                          className="block text-xs font-bold text-slate-800 mb-1"
+                        >
                           Patient Age
                         </label>
                         <input
@@ -1178,7 +1363,12 @@ export default function HomePage() {
                           type="number"
                           placeholder="e.g. 35"
                           value={patientData.age}
-                          onChange={(e) => setPatientData({ ...patientData, age: e.target.value })}
+                          onChange={(e) =>
+                            setPatientData({
+                              ...patientData,
+                              age: e.target.value,
+                            })
+                          }
                           className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
                         />
                       </div>
@@ -1186,13 +1376,21 @@ export default function HomePage() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label htmlFor={problemSelectId} className="block text-xs font-bold text-slate-800 mb-1">
+                        <label
+                          htmlFor={problemSelectId}
+                          className="block text-xs font-bold text-slate-800 mb-1"
+                        >
                           Health Concern
                         </label>
                         <select
                           id={problemSelectId}
                           value={patientData.problem}
-                          onChange={(e) => setPatientData({ ...patientData, problem: e.target.value })}
+                          onChange={(e) =>
+                            setPatientData({
+                              ...patientData,
+                              problem: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-slate-50 font-medium"
                         >
                           <option>General Consultation</option>
@@ -1206,17 +1404,31 @@ export default function HomePage() {
                         </select>
                       </div>
                       <div>
-                        <label htmlFor={typeSelectId} className="block text-xs font-bold text-slate-800 mb-1">
+                        <label
+                          htmlFor={typeSelectId}
+                          className="block text-xs font-bold text-slate-800 mb-1"
+                        >
                           Mode
                         </label>
                         <select
                           id={typeSelectId}
                           value={patientData.visitType}
-                          onChange={(e) => setPatientData({ ...patientData, visitType: e.target.value as "in-clinic" | "online" })}
+                          onChange={(e) =>
+                            setPatientData({
+                              ...patientData,
+                              visitType: e.target.value as
+                                | "in-clinic"
+                                | "online",
+                            })
+                          }
                           className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-slate-50 font-medium"
                         >
-                          <option value="in-clinic">In-Clinic Visit (Baridih)</option>
-                          <option value="online">Online WhatsApp Consult</option>
+                          <option value="in-clinic">
+                            In-Clinic Visit (Baridih)
+                          </option>
+                          <option value="online">
+                            Online WhatsApp Consult
+                          </option>
                         </select>
                       </div>
                     </div>
@@ -1224,7 +1436,10 @@ export default function HomePage() {
                     {/* Custom Health Concern if 'Other' selected */}
                     {patientData.problem === "Other" && (
                       <div className="pt-1">
-                        <label htmlFor={customProblemInputId} className="block text-xs font-bold text-slate-800 mb-1">
+                        <label
+                          htmlFor={customProblemInputId}
+                          className="block text-xs font-bold text-slate-800 mb-1"
+                        >
                           Specify Health Concern / Symptoms *
                         </label>
                         <input
@@ -1246,7 +1461,11 @@ export default function HomePage() {
                     className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 disabled:opacity-50 text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2"
                   >
                     <Calendar size={16} />
-                    <span>{isSubmitting ? "Reserving Slot..." : "Confirm & Book 15-Min Slot"}</span>
+                    <span>
+                      {isSubmitting
+                        ? "Reserving Slot..."
+                        : "Confirm & Book 15-Min Slot"}
+                    </span>
                   </button>
                 </form>
               </div>
@@ -1257,9 +1476,15 @@ export default function HomePage() {
                   <CheckCircle2 size={36} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-slate-900">15-Min Slot Confirmed!</h3>
+                  <h3 className="text-2xl font-black text-slate-900">
+                    15-Min Slot Confirmed!
+                  </h3>
                   <p className="text-xs text-slate-600 mt-1">
-                    Thank you, <span className="font-bold text-slate-900">{patientData.name || "Patient"}</span>. Your 15-minute consultation slot is booked.
+                    Thank you,{" "}
+                    <span className="font-bold text-slate-900">
+                      {patientData.name || "Patient"}
+                    </span>
+                    . Your 15-minute consultation slot is booked.
                   </p>
                 </div>
 
@@ -1274,22 +1499,36 @@ export default function HomePage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold text-slate-500">Reserved Slot:</span>
-                    <span className="font-black text-emerald-800">{selectedSlot?.displayLabel}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-slate-500">Phone:</span>
-                    <span className="font-bold text-slate-900">{patientData.phone}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-slate-500">Concern:</span>
-                    <span className="font-bold text-slate-900">
-                      {patientData.problem === "Other" ? (customProblem.trim() || "Other Health Concern") : patientData.problem}
+                    <span className="font-semibold text-slate-500">
+                      Reserved Slot:
+                    </span>
+                    <span className="font-black text-emerald-800">
+                      {selectedSlot?.displayLabel}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold text-slate-500">Clinic:</span>
-                    <span className="font-bold text-slate-900">Sai Homoeo Clinic, Baridih</span>
+                    <span className="font-semibold text-slate-500">Phone:</span>
+                    <span className="font-bold text-slate-900">
+                      {patientData.phone}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-slate-500">
+                      Concern:
+                    </span>
+                    <span className="font-bold text-slate-900">
+                      {patientData.problem === "Other"
+                        ? customProblem.trim() || "Other Health Concern"
+                        : patientData.problem}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-slate-500">
+                      Clinic:
+                    </span>
+                    <span className="font-bold text-slate-900">
+                      Sai Homoeo Clinic, Baridih
+                    </span>
                   </div>
                 </div>
 
@@ -1320,5 +1559,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-
