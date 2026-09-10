@@ -34,3 +34,12 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+-make the heading and text short
+
+- use real whatapp logo and book button with same height width
+- show doctor image at the top dashboard screen
+- remove stats section
+- make this section short Specialized Treatments for Chronic & Acute Conditions
+- after Specialized Treatments for Chronic & Acute Conditions add this Medicine Shelves & Tinctures in house despensory
+- remove patient experience section
