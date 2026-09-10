@@ -21,6 +21,12 @@ import {
   Save,
   Check,
   AlertCircle,
+  User,
+  Sun,
+  Moon,
+  Activity,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
 import {
   Appointment,
@@ -252,173 +258,201 @@ export default function AdminPage() {
 
       {/* 3. TAB 1: APPOINTMENTS FEED */}
       {activeTab === "appointments" && (
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
+        <main className="max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-6 pb-24 space-y-4 sm:space-y-6">
           {/* Quick Date Filters & Search */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Today Button with Count Badge */}
-              <button
-                onClick={() => setSelectedDate(todayStr)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                  selectedDate === todayStr
-                    ? "bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/30"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                <span>Today</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+          <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 shadow-2xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              {/* Date Filter Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                {/* Today Button with Count Badge */}
+                <button
+                  onClick={() => setSelectedDate(todayStr)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                     selectedDate === todayStr
-                      ? "bg-white/25 text-white"
-                      : todayCount > 0
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-slate-200 text-slate-600"
+                      ? "bg-emerald-700 text-white shadow-xs ring-2 ring-emerald-600/30"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
-                  {todayCount}
-                </span>
-              </button>
+                  <span>Today</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+                      selectedDate === todayStr
+                        ? "bg-white/25 text-white"
+                        : todayCount > 0
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {todayCount}
+                  </span>
+                </button>
 
-              {/* Tomorrow Button with Count Badge */}
-              <button
-                onClick={() => setSelectedDate(tomorrowStr)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                  selectedDate === tomorrowStr
-                    ? "bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/30"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                <span>Tomorrow</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+                {/* Tomorrow Button with Count Badge */}
+                <button
+                  onClick={() => setSelectedDate(tomorrowStr)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                     selectedDate === tomorrowStr
-                      ? "bg-white/25 text-white"
-                      : tomorrowCount > 0
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-slate-200 text-slate-600"
+                      ? "bg-emerald-700 text-white shadow-xs ring-2 ring-emerald-600/30"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
-                  {tomorrowCount}
-                </span>
-              </button>
+                  <span>Tomorrow</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+                      selectedDate === tomorrowStr
+                        ? "bg-white/25 text-white"
+                        : tomorrowCount > 0
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {tomorrowCount}
+                  </span>
+                </button>
 
-              {/* All Dates Button with Count Badge */}
-              <button
-                onClick={() => setSelectedDate("")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
-                  selectedDate === ""
-                    ? "bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/30"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                <span>All Dates</span>
-                <span
-                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+                {/* All Dates Button with Count Badge */}
+                <button
+                  onClick={() => setSelectedDate("")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                     selectedDate === ""
-                      ? "bg-white/25 text-white"
-                      : "bg-slate-200 text-slate-600"
+                      ? "bg-emerald-700 text-white shadow-xs ring-2 ring-emerald-600/30"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
-                  {allCount}
-                </span>
-              </button>
+                  <span>All Dates</span>
+                  <span
+                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+                      selectedDate === ""
+                        ? "bg-white/25 text-white"
+                        : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
+                    {allCount}
+                  </span>
+                </button>
+              </div>
 
-              <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
-                <span className="text-[11px] text-slate-400 font-semibold">
-                  Custom:
+              {/* Custom Date Input */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-[11px] text-slate-400 font-semibold shrink-0">
+                  Pick Date:
                 </span>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-2.5 py-1 rounded-lg border border-slate-300 text-xs bg-slate-50 text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600 font-semibold"
+                  className="flex-1 sm:flex-initial px-2.5 py-1 rounded-xl border border-slate-300 text-xs bg-slate-50 text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600 font-semibold"
                 />
               </div>
             </div>
 
-            <div className="relative flex-1 max-w-xs">
+            {/* Search Input */}
+            <div className="relative w-full">
               <Search
-                size={15}
+                size={14}
                 className="absolute left-3 top-2.5 text-slate-400"
               />
               <input
                 type="text"
-                placeholder="Search patient name or phone..."
+                placeholder="Search patient name, phone, or condition..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50/80 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-600 transition"
               />
             </div>
           </div>
 
           {/* Metric Cards (Clean 2x2 Grid on Mobile, 4-col on Desktop) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
-                Total Bookings
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
+                  Total Bookings
+                </span>
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Calendar size={13} />
+                </div>
               </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 sm:mt-1">
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
                 {filteredAppointments.length}
               </div>
               <div className="text-[10px] sm:text-[11px] text-emerald-700 font-semibold mt-0.5 truncate">
                 {selectedDate ? formatDateDisplay(selectedDate) : "All time"}
               </div>
             </div>
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
-                Morning Shift
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
+                  Morning Shift
+                </span>
+                <div className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <Sun size={13} />
+                </div>
               </div>
-              <div className="text-xl sm:text-2xl font-black text-emerald-800 mt-0.5 sm:mt-1">
+              <div className="text-xl sm:text-2xl font-black text-emerald-800 mt-1">
                 {morningBookings.length}
               </div>
               <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
                 10 AM – 2 PM
               </div>
             </div>
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
-                Evening Shift
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
+                  Evening Shift
+                </span>
+                <div className="w-6 h-6 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
+                  <Moon size={13} />
+                </div>
               </div>
-              <div className="text-xl sm:text-2xl font-black text-teal-800 mt-0.5 sm:mt-1">
+              <div className="text-xl sm:text-2xl font-black text-teal-800 mt-1">
                 {eveningBookings.length}
               </div>
               <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
                 5 PM – 10 PM
               </div>
             </div>
-            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
-                Database Status
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
+                  Database
+                </span>
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Activity size={13} />
+                </div>
               </div>
               <div className="text-xs sm:text-sm font-black text-slate-900 mt-1 flex items-center gap-1.5 truncate">
                 <span
-                  className={`w-2 h-2 sm:w-2.5 sm:h-2.5 shrink-0 rounded-full ${isSupabaseConfigured ? "bg-emerald-500" : "bg-amber-500"}`}
+                  className={`w-2 h-2 shrink-0 rounded-full ${isSupabaseConfigured ? "bg-emerald-500" : "bg-amber-500"}`}
                 ></span>
                 <span className="truncate">
                   {isSupabaseConfigured ? "Supabase Live" : "Local Demo"}
                 </span>
               </div>
-              <div className="text-[10px] text-slate-500 mt-0.5 sm:mt-1">
+              <div className="text-[10px] text-slate-400 mt-0.5 truncate">
                 Multi-tenant ready
               </div>
             </div>
           </div>
 
           {/* Appointment List Feed */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <Calendar size={18} className="text-emerald-700" />
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+            <div className="p-3.5 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <Calendar size={16} className="text-emerald-700" />
                 <span>Patient List &amp; Slots</span>
               </h2>
               <button
                 onClick={() => loadAppointments(false)}
                 disabled={refreshing}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 text-xs font-semibold"
+                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 text-xs font-semibold"
                 title="Refresh live data"
               >
                 <RefreshCw
-                  size={13}
+                  size={12}
                   className={refreshing ? "animate-spin text-emerald-700" : ""}
                 />
                 <span>Refresh</span>
@@ -430,14 +464,14 @@ export default function AdminPage() {
                 Loading appointments...
               </div>
             ) : filteredAppointments.length === 0 ? (
-              <div className="p-12 text-center space-y-2">
+              <div className="p-10 sm:p-12 text-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-                  <Calendar size={24} />
+                  <Calendar size={22} />
                 </div>
-                <h3 className="text-base font-bold text-slate-800">
+                <h3 className="text-sm sm:text-base font-bold text-slate-800">
                   No appointments found
                 </h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
                   There are no bookings for the selected date. Any new patient
                   booking from the website will automatically appear here!
                 </p>
@@ -451,25 +485,25 @@ export default function AdminPage() {
                   return (
                     <div
                       key={apt.id}
-                      className={`p-3.5 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-xs ${
+                      className={`rounded-2xl border-2 transition-all p-3.5 sm:p-5 bg-white shadow-xs hover:shadow-md ${
                         isDone
-                          ? "border-emerald-800/70 bg-emerald-50/20 opacity-85 hover:border-emerald-800"
+                          ? "border-emerald-800/80 bg-emerald-50/15"
                           : isCancelled
-                            ? "border-slate-300 bg-red-50/20 opacity-70 hover:border-slate-400"
-                            : "border-emerald-800 bg-white hover:border-emerald-900 hover:shadow-md"
+                            ? "border-slate-300 bg-slate-50/60 opacity-75"
+                            : "border-emerald-800 hover:border-emerald-900"
                       }`}
                     >
-                      {/* Left Slot Time & Patient Info */}
+                      {/* Left Slot Time Badge + Patient Info */}
                       <div className="flex items-start gap-3 sm:gap-3.5">
-                        {/* 15-Minute Slot Badge */}
+                        {/* Left Side 15-Minute Slot Badge */}
                         <div className="w-20 sm:w-24 shrink-0 p-2 sm:p-2.5 rounded-xl bg-emerald-900 text-white text-center shadow-2xs border border-emerald-950">
-                          <div className="text-xs sm:text-sm font-black text-white tracking-tight">
+                          <div className="text-xs sm:text-sm font-black text-white tracking-tight leading-none">
                             {formatTime12h(apt.slot_start_time)}
                           </div>
-                          <div className="text-[10px] text-emerald-200 font-semibold mt-0.5">
+                          <div className="text-[10px] text-emerald-200 font-semibold mt-1 leading-none">
                             to {formatTime12h(apt.slot_end_time)}
                           </div>
-                          <div className="text-[9px] uppercase font-bold text-emerald-300/80 mt-0.5 sm:mt-1">
+                          <div className="text-[9px] uppercase font-bold text-emerald-300/80 mt-1 sm:mt-1.5 leading-none">
                             15 Mins
                           </div>
                         </div>
@@ -490,7 +524,7 @@ export default function AdminPage() {
                                 isDone
                                   ? "bg-blue-50 text-blue-800 border-blue-200"
                                   : isCancelled
-                                    ? "bg-red-50 text-red-800 border-red-200"
+                                    ? "bg-amber-50 text-amber-800 border-amber-200"
                                     : "bg-emerald-100 text-emerald-900 border-emerald-300"
                               }`}
                             >
@@ -524,21 +558,23 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Right Action Buttons (2-tier responsive mobile layout) */}
-                      <div className="w-full sm:w-auto shrink-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex flex-col sm:flex-row sm:items-center gap-2">
-                        {/* 1. Call & WhatsApp Actions */}
+                      {/* Action Toolbar */}
+                      <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        {/* Direct Contact: Call & WhatsApp */}
                         <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
-                          {/* Call Button */}
                           <a
                             href={`tel:${apt.patient_phone}`}
-                            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-900 hover:border-emerald-300 border border-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-2xs"
-                            title="Call Patient"
+                            className="h-8 sm:h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-900 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-2xs"
                           >
-                            <Phone size={13} className="text-emerald-700 shrink-0" />
-                            <span className="truncate">{apt.patient_phone}</span>
+                            <Phone
+                              size={13}
+                              className="text-emerald-700 shrink-0"
+                            />
+                            <span className="truncate">
+                              {apt.patient_phone}
+                            </span>
                           </a>
 
-                          {/* WhatsApp Button */}
                           <a
                             href={`https://wa.me/91${apt.patient_phone.replace(/\D/g, "")}?text=Hello%20${encodeURIComponent(
                               apt.patient_name,
@@ -547,51 +583,50 @@ export default function AdminPage() {
                             )}%20at%20${encodeURIComponent(formatTime12h(apt.slot_start_time))}.`}
                             target="_blank"
                             rel="noreferrer"
-                            className="px-3.5 py-2 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition"
-                            title="WhatsApp Patient"
+                            className="h-8 sm:h-9 px-3.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95"
                           >
-                            <WhatsAppIcon size={14} className="text-white shrink-0" />
+                            <WhatsAppIcon
+                              size={14}
+                              className="text-white shrink-0"
+                            />
                             <span>WhatsApp</span>
                           </a>
                         </div>
 
-                        {/* 2. Management Controls (Complete, Cancel, Delete) */}
-                        <div className="flex items-center justify-end sm:justify-start gap-1.5 pt-0.5 sm:pt-0">
-                          {/* Mark Completed Toggle */}
+                        {/* Status Toggles & Delete */}
+                        <div className="flex items-center justify-between sm:justify-end gap-1.5 pt-0.5 sm:pt-0">
                           {!isDone && (
                             <button
                               onClick={() =>
                                 handleStatusChange(apt.id, "completed")
                               }
-                              className="px-2.5 py-1.5 sm:p-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 transition flex items-center gap-1 text-xs font-bold"
+                              className="h-8 px-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 font-bold text-xs flex items-center gap-1 transition active:scale-95 flex-1"
                               title="Mark as Completed"
                             >
-                              <CheckCircle2 size={16} />
-                              <span className="sm:hidden text-[11px]">Complete</span>
+                              <CheckCircle2 size={13} />
+                              <span>Complete</span>
                             </button>
                           )}
 
-                          {/* Cancel / Free Slot */}
                           {!isCancelled && (
                             <button
                               onClick={() =>
                                 handleStatusChange(apt.id, "cancelled")
                               }
-                              className="px-2.5 py-1.5 sm:p-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 transition flex items-center gap-1 text-xs font-bold"
-                              title="Cancel Appointment & Free Slot"
+                              className="h-8 px-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-xs flex items-center gap-1 transition active:scale-95 flex-1"
+                              title="Cancel Appointment"
                             >
-                              <XCircle size={16} />
-                              <span className="sm:hidden text-[11px]">Cancel</span>
+                              <XCircle size={13} />
+                              <span>Cancel</span>
                             </button>
                           )}
 
-                          {/* Delete Permanently */}
                           <button
                             onClick={() => handleDelete(apt.id)}
-                            className="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-700 border border-slate-200 hover:border-red-200 text-slate-400 transition ml-auto sm:ml-0"
-                            title="Delete"
+                            className="h-8 w-8 rounded-xl bg-red-50 hover:bg-red-100 hover:text-red-700 hover:border-red-200 border border-red-200 text-red-500 flex items-center justify-center transition active:scale-95 flex-1"
+                            title="Delete Permanently"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </div>
