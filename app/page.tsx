@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useId } from "react";
+import { useState, useEffect, useId } from "react";
+import Link from "next/link";
 import {
   Phone,
   MapPin,
@@ -23,7 +24,17 @@ import {
   Check,
   ChevronDown,
   Navigation,
+  AlertCircle,
+  Lock,
 } from "lucide-react";
+import {
+  SlotInfo,
+  generateSlotsForDate,
+  getBookedSlotsForDate,
+  bookAppointment,
+  getLocalSettings,
+  formatTime12h,
+} from "@/lib/booking-service";
 
 const CLINIC_NAME = "Sai Homoeo Clinic";
 const DOCTOR_NAME = "Dr. S. K. Sharma";
@@ -109,7 +120,7 @@ const FAQS = [
   },
   {
     q: "How can I book an appointment or consult the doctor?",
-    a: "You can easily request a visit using the Book button or message Dr. Sharma directly on WhatsApp for instant confirmation.",
+    a: "You can easily select your date and 15-minute time slot using the Book button or message Dr. Sharma directly on WhatsApp for instant confirmation.",
   },
 ];
 
@@ -117,32 +128,110 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  // Slot-based booking state
+  const todayDateStr = new Date().toISOString().split("T")[0];
+  const [selectedDate, setSelectedDate] = useState(todayDateStr);
+  const [slots, setSlots] = useState<SlotInfo[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<SlotInfo | null>(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
+
+  // Patient Info
   const [patientData, setPatientData] = useState({
     name: "",
     phone: "",
     age: "",
     problem: "General Consultation",
-    timeSlot: "Evening (5:30 PM - 9:00 PM)",
-    visitType: "In-Clinic (Baridih)",
+    visitType: "in-clinic" as "in-clinic" | "online",
   });
 
   const nameInputId = useId();
   const phoneInputId = useId();
   const ageInputId = useId();
   const problemSelectId = useId();
-  const slotSelectId = useId();
   const typeSelectId = useId();
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  // Load available 15-minute slots whenever selectedDate or modal status changes
+  useEffect(() => {
+    async function loadDateSlots() {
+      setLoadingSlots(true);
+      setBookingError(null);
+      try {
+        const settings = getLocalSettings();
+        const bookedTimes = await getBookedSlotsForDate(selectedDate);
+        const generated = generateSlotsForDate(selectedDate, settings, bookedTimes);
+        setSlots(generated);
+
+        // Auto-select first available slot if previous is not available
+        const firstAvailable = generated.find((s) => !s.isBooked && !s.isPassed);
+        setSelectedSlot((prev) => {
+          if (prev && generated.some((s) => s.startTime === prev.startTime && !s.isBooked && !s.isPassed)) {
+            return prev;
+          }
+          return firstAvailable || null;
+        });
+      } catch (err) {
+        console.error("Error loading slots", err);
+      } finally {
+        setLoadingSlots(false);
+      }
+    }
+
+    if (bookingModalOpen) {
+      loadDateSlots();
+    }
+  }, [selectedDate, bookingModalOpen]);
+
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBookingSubmitted(true);
+    setBookingError(null);
+
+    if (!selectedSlot) {
+      setBookingError("Please select an available 15-minute time slot.");
+      return;
+    }
+
+    if (!patientData.phone || patientData.phone.trim().length < 8) {
+      setBookingError("Please provide a valid mandatory phone number for appointment confirmation.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const res = await bookAppointment({
+      patient_name: patientData.name,
+      patient_phone: patientData.phone,
+      patient_age: patientData.age ? parseInt(patientData.age, 10) : undefined,
+      problem: patientData.problem,
+      appointment_date: selectedDate,
+      slot_start_time: selectedSlot.startTime,
+      slot_end_time: selectedSlot.endTime,
+      consultation_mode: patientData.visitType,
+    });
+
+    setIsSubmitting(false);
+
+    if (res.success) {
+      setBookingSubmitted(true);
+    } else {
+      setBookingError(res.error || "Failed to book slot. Please pick another available time.");
+      // Refresh slots
+      const settings = getLocalSettings();
+      const bookedTimes = await getBookedSlotsForDate(selectedDate);
+      setSlots(generateSlotsForDate(selectedDate, settings, bookedTimes));
+    }
   };
 
   const handleOpenWhatsAppBooking = () => {
-    const message = `Hello Sai Homoeo Clinic! I would like to book a consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A🎂 *Age:* ${patientData.age || "N/A"}%0A🩺 *Health Concern:* ${patientData.problem}%0A⏰ *Preferred Time:* ${patientData.timeSlot}%0A📍 *Type:* ${patientData.visitType}%0A%0APlease confirm the appointment slot.`;
+    const slotLabel = selectedSlot ? `${selectedSlot.timeLabel} (${selectedSlot.displayLabel})` : "Preferred Slot";
+    const message = `Hello Sai Homoeo Clinic! I booked a 15-minute consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A🎂 *Age:* ${patientData.age || "N/A"}%0A🩺 *Health Concern:* ${patientData.problem}%0A📅 *Date:* ${selectedDate}%0A⏰ *Time Slot:* ${slotLabel}%0A📍 *Mode:* ${patientData.visitType === "in-clinic" ? "In-Clinic (Baridih)" : "Online Consult"}%0A%0APlease confirm my appointment.`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
   };
+
+  const morningSlots = slots.filter((s) => s.shift === "morning");
+  const eveningSlots = slots.filter((s) => s.shift === "evening");
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans pb-mobile-nav">
@@ -155,7 +244,7 @@ export default function HomePage() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
             <span className="font-bold text-white">Clinic Open Today:</span>
-            <span className="hidden sm:inline text-emerald-200">10:00 AM – 1:30 PM &amp; 5:30 PM – 9:00 PM</span>
+            <span className="hidden sm:inline text-emerald-200">10:00 AM – 2:00 PM &amp; 5:00 PM – 10:00 PM</span>
             <span className="text-emerald-300 font-medium">| Baridih, Jamshedpur</span>
           </div>
           <div className="flex items-center gap-4 text-xs">
@@ -236,7 +325,7 @@ export default function HomePage() {
               className="h-11 px-5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-800 text-white font-bold text-xs shadow-md shadow-emerald-900/20 hover:from-emerald-800 hover:to-teal-900 transition flex items-center justify-center gap-2"
             >
               <Calendar size={16} />
-              <span>Book Visit</span>
+              <span>Book 15-Min Slot</span>
             </button>
           </div>
 
@@ -315,7 +404,7 @@ export default function HomePage() {
                 className="h-12 rounded-xl bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md"
               >
                 <Calendar size={18} />
-                <span>Book Visit</span>
+                <span>Book Slot</span>
               </button>
             </div>
           </div>
@@ -395,7 +484,7 @@ export default function HomePage() {
                 <div className="space-y-2 text-sm text-slate-700 font-medium">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                    <span>Detailed Constitutional Consultation &amp; Root-Cause Cure</span>
+                    <span>Detailed Constitutional Consultation &amp; 15-Minute Dedicated Slots</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
@@ -417,7 +506,7 @@ export default function HomePage() {
                     className="h-13 sm:h-14 flex-1 sm:flex-initial sm:min-w-[200px] px-6 rounded-2xl bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-800 hover:to-teal-900 text-white font-extrabold text-sm shadow-lg shadow-emerald-950/20 hover:shadow-xl transition flex items-center justify-center gap-2.5 active:scale-95"
                   >
                     <Calendar size={18} />
-                    <span>Book Appointment</span>
+                    <span>Book 15-Min Slot</span>
                   </button>
 
                   <a
@@ -619,7 +708,7 @@ export default function HomePage() {
                       <CheckCircle2 size={15} className="text-emerald-600" />
                       <span>Individualized Case Study</span>
                     </div>
-                    <p className="text-[11px] text-slate-600">30-minute detailed evaluation of constitutional symptoms.</p>
+                    <p className="text-[11px] text-slate-600">Dedicated 15-minute slot for constitutional evaluation.</p>
                   </div>
                   <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                     <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5 mb-1">
@@ -639,7 +728,7 @@ export default function HomePage() {
                     className="h-12 px-6 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-md transition flex items-center gap-2"
                   >
                     <Calendar size={15} />
-                    <span>Request Consultation</span>
+                    <span>Request 15-Min Slot</span>
                   </button>
                   <a
                     href={`tel:${CLINIC_PHONE.replace(/\s+/g, "")}`}
@@ -690,20 +779,20 @@ export default function HomePage() {
                   <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-xs">
                     <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
                       <Clock size={16} className="text-emerald-700" />
-                      <span>Consultation Hours</span>
+                      <span>Consultation Hours (15-Min Slots)</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                        <div className="text-[10px] font-bold text-slate-400">Morning</div>
-                        <div className="font-extrabold text-slate-800 text-xs mt-0.5">10:00 AM – 1:30 PM</div>
+                        <div className="text-[10px] font-bold text-slate-400">Shift 1 (Morning)</div>
+                        <div className="font-extrabold text-slate-800 text-xs mt-0.5">10:00 AM – 2:00 PM</div>
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                        <div className="text-[10px] font-bold text-slate-400">Evening</div>
-                        <div className="font-extrabold text-slate-800 text-xs mt-0.5">5:30 PM – 9:00 PM</div>
+                        <div className="text-[10px] font-bold text-slate-400">Shift 2 (Evening)</div>
+                        <div className="font-extrabold text-slate-800 text-xs mt-0.5">5:00 PM – 10:00 PM</div>
                       </div>
                     </div>
                     <div className="text-[11px] text-emerald-800 font-semibold bg-emerald-50 p-2 rounded-lg text-center">
-                      Sunday: 10:00 AM – 1:00 PM
+                      Sunday: 10:00 AM – 1:00 PM (Prior slot booking recommended)
                     </div>
                   </div>
                 </div>
@@ -794,8 +883,13 @@ export default function HomePage() {
               Near Ramni Kali Mandir, Baridih, Jamshedpur - 831017, Jharkhand
             </div>
           </div>
-          <div className="text-[11px] text-slate-500">
-            &copy; {new Date().getFullYear()} Sai Homoeo Clinic. All rights reserved.
+          <div className="flex items-center gap-4 text-[11px] text-slate-500">
+            <span>&copy; {new Date().getFullYear()} Sai Homoeo Clinic.</span>
+            <span>•</span>
+            <Link href="/admin" className="hover:text-emerald-400 font-semibold flex items-center gap-1">
+              <Lock size={12} />
+              <span>Doctor Admin</span>
+            </Link>
           </div>
         </div>
       </footer>
@@ -838,170 +932,314 @@ export default function HomePage() {
           className="flex-[2] h-12 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-800 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md"
         >
           <Calendar size={15} />
-          <span>Book Visit</span>
+          <span>Book Slot</span>
         </button>
       </div>
 
-      {/* 11. BOOKING APPOINTMENT MODAL */}
+      {/* 11. DYNAMIC 15-MINUTE SLOT BOOKING MODAL */}
       {bookingModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) setBookingModalOpen(false);
           }}
         >
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative my-8">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-5 sm:p-7 shadow-2xl border border-slate-100 relative my-6 max-h-[92vh] flex flex-col">
             <button
               onClick={() => setBookingModalOpen(false)}
-              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition z-10"
               aria-label="Close"
             >
               <X size={18} />
             </button>
 
             {!bookingSubmitted ? (
-              <>
-                <div className="badge-pill bg-emerald-100 text-emerald-800 mb-2">
-                  <Calendar size={13} />
-                  <span>REQUEST CONSULTATION</span>
+              <div className="overflow-y-auto pr-1 space-y-4 text-left">
+                <div>
+                  <div className="badge-pill bg-emerald-100 text-emerald-800 mb-1.5">
+                    <Clock size={13} />
+                    <span>15-MINUTE SLOT BOOKING</span>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900">Choose Date &amp; Available Slot</h3>
+                  <p className="text-xs text-slate-500">
+                    Dr. S. K. Sharma • Shift 1: 10AM-2PM | Shift 2: 5PM-10PM
+                  </p>
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-1">Book an Appointment</h3>
-                <p className="text-xs text-slate-500 mb-5">
-                  Dr. S. K. Sharma • Sai Homoeo Clinic, Baridih, Jamshedpur
-                </p>
 
-                <form onSubmit={handleBookingSubmit} className="space-y-4 text-left">
+                {bookingError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span>{bookingError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleBookingSubmit} className="space-y-4">
+                  {/* STEP 1: SELECT DATE */}
                   <div>
-                    <label htmlFor={nameInputId} className="block text-xs font-bold text-slate-700 mb-1">
-                      Patient Full Name *
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                      <span>1. Select Appointment Date *</span>
+                      <span className="text-[11px] text-emerald-700 font-semibold">{selectedDate}</span>
                     </label>
-                    <input
-                      id={nameInputId}
-                      required
-                      type="text"
-                      placeholder="e.g. Ramesh Kumar"
-                      value={patientData.name}
-                      onChange={(e) => setPatientData({ ...patientData, name: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-slate-50"
-                    />
+
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate(todayDateStr)}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold text-center transition ${
+                          selectedDate === todayDateStr
+                            ? "bg-emerald-700 text-white shadow-xs"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        }`}
+                      >
+                        Today
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+                          setSelectedDate(tomorrow);
+                        }}
+                        className={`py-2 px-2.5 rounded-xl text-xs font-bold text-center transition ${
+                          selectedDate === new Date(Date.now() + 86400000).toISOString().split("T")[0]
+                            ? "bg-emerald-700 text-white shadow-xs"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        }`}
+                      >
+                        Tomorrow
+                      </button>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          min={todayDateStr}
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          className="w-full py-1.5 px-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 text-slate-800 text-center"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* STEP 2: SELECT 15-MINUTE SLOT */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-bold text-slate-800 flex items-center justify-between">
+                      <span>2. Select 15-Minute Slot *</span>
+                      {selectedSlot && (
+                        <span className="text-[11px] font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Selected: {selectedSlot.displayLabel}
+                        </span>
+                      )}
+                    </label>
+
+                    {loadingSlots ? (
+                      <div className="py-6 text-center text-xs text-slate-400">Loading live availability...</div>
+                    ) : (
+                      <div className="space-y-3 max-h-48 overflow-y-auto p-2 bg-slate-50 rounded-2xl border border-slate-200">
+                        {/* Morning Shift Slots */}
+                        {morningSlots.length > 0 && (
+                          <div>
+                            <div className="text-[10px] uppercase font-bold text-slate-400 mb-1.5 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
+                              <span>Morning Shift (10:00 AM – 02:00 PM)</span>
+                            </div>
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                              {morningSlots.map((slot, idx) => {
+                                const isSelected = selectedSlot?.startTime === slot.startTime;
+                                const isUnavailable = slot.isBooked || slot.isPassed;
+
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    disabled={isUnavailable}
+                                    onClick={() => setSelectedSlot(slot)}
+                                    className={`py-2 px-1.5 rounded-xl text-xs font-extrabold transition flex flex-col items-center justify-center ${
+                                      isSelected
+                                        ? "bg-emerald-700 text-white shadow-md scale-98"
+                                        : isUnavailable
+                                        ? "bg-slate-200/70 text-slate-400 cursor-not-allowed line-through"
+                                        : "bg-white hover:bg-emerald-50 text-slate-800 border border-slate-200 hover:border-emerald-300"
+                                    }`}
+                                  >
+                                    <span>{slot.timeLabel}</span>
+                                    <span className="text-[9px] font-normal opacity-80">
+                                      {slot.isBooked ? "Booked" : slot.isPassed ? "Passed" : "Available"}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Evening Shift Slots */}
+                        {eveningSlots.length > 0 && (
+                          <div className="pt-2 border-t border-slate-200/80">
+                            <div className="text-[10px] uppercase font-bold text-slate-400 mb-1.5 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-teal-600"></span>
+                              <span>Evening Shift (05:00 PM – 10:00 PM)</span>
+                            </div>
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                              {eveningSlots.map((slot, idx) => {
+                                const isSelected = selectedSlot?.startTime === slot.startTime;
+                                const isUnavailable = slot.isBooked || slot.isPassed;
+
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    disabled={isUnavailable}
+                                    onClick={() => setSelectedSlot(slot)}
+                                    className={`py-2 px-1.5 rounded-xl text-xs font-extrabold transition flex flex-col items-center justify-center ${
+                                      isSelected
+                                        ? "bg-emerald-700 text-white shadow-md scale-98"
+                                        : isUnavailable
+                                        ? "bg-slate-200/70 text-slate-400 cursor-not-allowed line-through"
+                                        : "bg-white hover:bg-emerald-50 text-slate-800 border border-slate-200 hover:border-emerald-300"
+                                    }`}
+                                  >
+                                    <span>{slot.timeLabel}</span>
+                                    <span className="text-[9px] font-normal opacity-80">
+                                      {slot.isBooked ? "Booked" : slot.isPassed ? "Passed" : "Available"}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* STEP 3: PATIENT MANDATORY DETAILS */}
+                  <div className="space-y-3 pt-1 border-t border-slate-100">
                     <div>
-                      <label htmlFor={phoneInputId} className="block text-xs font-bold text-slate-700 mb-1">
-                        Phone Number *
+                      <label htmlFor={nameInputId} className="block text-xs font-bold text-slate-800 mb-1">
+                        Patient Full Name *
                       </label>
                       <input
-                        id={phoneInputId}
+                        id={nameInputId}
                         required
-                        type="tel"
-                        placeholder="e.g. 9876543210"
-                        value={patientData.phone}
-                        onChange={(e) => setPatientData({ ...patientData, phone: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-slate-50"
+                        type="text"
+                        placeholder="e.g. Ramesh Kumar"
+                        value={patientData.name}
+                        onChange={(e) => setPatientData({ ...patientData, name: e.target.value })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
                       />
                     </div>
-                    <div>
-                      <label htmlFor={ageInputId} className="block text-xs font-bold text-slate-700 mb-1">
-                        Patient Age
-                      </label>
-                      <input
-                        id={ageInputId}
-                        type="number"
-                        placeholder="e.g. 35"
-                        value={patientData.age}
-                        onChange={(e) => setPatientData({ ...patientData, age: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-slate-50"
-                      />
-                    </div>
-                  </div>
 
-                  <div>
-                    <label htmlFor={problemSelectId} className="block text-xs font-bold text-slate-700 mb-1">
-                      Health Concern / Specialty
-                    </label>
-                    <select
-                      id={problemSelectId}
-                      value={patientData.problem}
-                      onChange={(e) => setPatientData({ ...patientData, problem: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-slate-50"
-                    >
-                      <option>General Consultation</option>
-                      <option>Skin &amp; Hair Care</option>
-                      <option>Digestive &amp; Liver Care</option>
-                      <option>Respiratory &amp; Allergies</option>
-                      <option>Joints &amp; Arthritis Pain</option>
-                      <option>Kidney Stones</option>
-                      <option>Child &amp; Pediatric Care</option>
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor={slotSelectId} className="block text-xs font-bold text-slate-700 mb-1">
-                        Preferred Time Slot
-                      </label>
-                      <select
-                        id={slotSelectId}
-                        value={patientData.timeSlot}
-                        onChange={(e) => setPatientData({ ...patientData, timeSlot: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-slate-50"
-                      >
-                        <option>Morning (10:00 AM – 1:30 PM)</option>
-                        <option>Evening (5:30 PM – 9:00 PM)</option>
-                        <option>Sunday (10:00 AM – 1:00 PM)</option>
-                      </select>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor={phoneInputId} className="block text-xs font-bold text-slate-800 mb-1">
+                          Phone Number (Mandatory) *
+                        </label>
+                        <input
+                          id={phoneInputId}
+                          required
+                          type="tel"
+                          placeholder="e.g. 9876543210"
+                          value={patientData.phone}
+                          onChange={(e) => setPatientData({ ...patientData, phone: e.target.value })}
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={ageInputId} className="block text-xs font-bold text-slate-800 mb-1">
+                          Patient Age
+                        </label>
+                        <input
+                          id={ageInputId}
+                          type="number"
+                          placeholder="e.g. 35"
+                          value={patientData.age}
+                          onChange={(e) => setPatientData({ ...patientData, age: e.target.value })}
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label htmlFor={typeSelectId} className="block text-xs font-bold text-slate-700 mb-1">
-                        Mode
-                      </label>
-                      <select
-                        id={typeSelectId}
-                        value={patientData.visitType}
-                        onChange={(e) => setPatientData({ ...patientData, visitType: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-slate-50"
-                      >
-                        <option>In-Clinic Visit (Baridih)</option>
-                        <option>Online Phone/WhatsApp Consult</option>
-                      </select>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label htmlFor={problemSelectId} className="block text-xs font-bold text-slate-800 mb-1">
+                          Health Concern
+                        </label>
+                        <select
+                          id={problemSelectId}
+                          value={patientData.problem}
+                          onChange={(e) => setPatientData({ ...patientData, problem: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-slate-50 font-medium"
+                        >
+                          <option>General Consultation</option>
+                          <option>Skin &amp; Hair Care</option>
+                          <option>Digestive &amp; Liver Care</option>
+                          <option>Respiratory &amp; Allergies</option>
+                          <option>Joints &amp; Arthritis Pain</option>
+                          <option>Kidney Stones</option>
+                          <option>Child &amp; Pediatric Care</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor={typeSelectId} className="block text-xs font-bold text-slate-800 mb-1">
+                          Mode
+                        </label>
+                        <select
+                          id={typeSelectId}
+                          value={patientData.visitType}
+                          onChange={(e) => setPatientData({ ...patientData, visitType: e.target.value as "in-clinic" | "online" })}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-slate-50 font-medium"
+                        >
+                          <option value="in-clinic">In-Clinic Visit (Baridih)</option>
+                          <option value="online">Online WhatsApp Consult</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full mt-4 h-13 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-extrabold text-sm shadow-md transition"
+                    disabled={isSubmitting || !selectedSlot}
+                    className="w-full h-12 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 disabled:opacity-50 text-white font-extrabold text-sm shadow-md transition flex items-center justify-center gap-2"
                   >
-                    Submit Booking Request
+                    <Calendar size={16} />
+                    <span>{isSubmitting ? "Reserving Slot..." : "Confirm & Book 15-Min Slot"}</span>
                   </button>
                 </form>
-              </>
+              </div>
             ) : (
+              /* BOOKING CONFIRMATION SCREEN */
               <div className="text-center py-4 space-y-4">
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-inner">
                   <CheckCircle2 size={36} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-slate-900">Request Prepared!</h3>
+                  <h3 className="text-2xl font-black text-slate-900">15-Min Slot Confirmed!</h3>
                   <p className="text-xs text-slate-600 mt-1">
-                    Thank you, <span className="font-bold text-slate-900">{patientData.name || "Patient"}</span>. Send your details directly to Dr. Sharma's WhatsApp for instant confirmation.
+                    Thank you, <span className="font-bold text-slate-900">{patientData.name}</span>. Your 15-minute consultation slot is booked.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs space-y-1">
-                  <div>
-                    <span className="font-semibold text-slate-500">Concern:</span>{" "}
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-500">Date:</span>
+                    <span className="font-extrabold text-slate-900">{selectedDate}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-500">Reserved Slot:</span>
+                    <span className="font-black text-emerald-800">{selectedSlot?.displayLabel}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-500">Phone:</span>
+                    <span className="font-bold text-slate-900">{patientData.phone}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-500">Concern:</span>
                     <span className="font-bold text-slate-900">{patientData.problem}</span>
                   </div>
-                  <div>
-                    <span className="font-semibold text-slate-500">Slot:</span>{" "}
-                    <span className="font-bold text-slate-900">{patientData.timeSlot}</span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-slate-500">Location:</span>{" "}
-                    <span className="font-bold text-slate-900">Near Ramni Kali Mandir, Baridih</span>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-500">Clinic:</span>
+                    <span className="font-bold text-slate-900">Sai Homoeo Clinic, Baridih</span>
                   </div>
                 </div>
 
@@ -1011,7 +1249,7 @@ export default function HomePage() {
                     className="w-full h-13 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-black text-sm flex items-center justify-center gap-2 shadow-md transition"
                   >
                     <WhatsAppIcon size={20} className="text-white" />
-                    <span>Send Details to WhatsApp</span>
+                    <span>Send Details to Dr. Sharma on WhatsApp</span>
                   </button>
 
                   <button
