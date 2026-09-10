@@ -118,8 +118,15 @@
 }
 
 /* Mobile Bottom Safe Spacing */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .pb-mobile-nav {
-    padding-bottom: 5.5rem;
+    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Mobile Touch & Scroll Helpers */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents iOS Safari auto-zoom on input focus */
   }
 }

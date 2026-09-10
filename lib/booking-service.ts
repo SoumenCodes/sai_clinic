@@ -75,6 +75,21 @@ export function addMinutesToTime(time24: string, minutesToAdd: number): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }
 
+// Helper: Get local YYYY-MM-DD string according to local timezone
+export function getLocalDateString(d: Date = new Date()): string {
+  const year = d.getFullYear();
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const day = d.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Helper: Get tomorrow's local YYYY-MM-DD string
+export function getTomorrowDateString(d: Date = new Date()): string {
+  const tomorrow = new Date(d);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return getLocalDateString(tomorrow);
+}
+
 // Helper: Format "YYYY-MM-DD" to "10 Sep 2026"
 export function formatDateDisplay(dateStr: string): string {
   if (!dateStr) return "";
@@ -120,8 +135,8 @@ function timeToMinutes(time24: string): number {
 
 // Initial demo mock appointments for seamless testing
 function getInitialMockAppointments(): Appointment[] {
-  const today = new Date().toISOString().split("T")[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const today = getLocalDateString();
+  const tomorrow = getTomorrowDateString();
 
   return [
     {
@@ -221,7 +236,7 @@ export function generateSlotsForDate(
   const slotDuration = settings.slotDurationMinutes || 15;
 
   const now = new Date();
-  const isToday = dateStr === now.toISOString().split("T")[0];
+  const isToday = dateStr === getLocalDateString(now);
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   const slots: SlotInfo[] = [];
@@ -266,11 +281,23 @@ export function generateSlotsForDate(
   return slots;
 }
 
-// Fetch Booked Slots for a Date (Supabase with Local Fallback)
+// In-memory cache for booked slots (speeds up date switching to 0ms)
+const bookedSlotsCache = new Map<string, { times: string[]; expiresAt: number }>();
+const DEFAULT_CLINIC_UUID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+
+// Fetch Booked Slots for a Date (Supabase with Local Fallback + Instant Cache)
 export async function getBookedSlotsForDate(
   dateStr: string,
-  clinicSlug: string = DEFAULT_CLINIC_SLUG
+  clinicSlug: string = DEFAULT_CLINIC_SLUG,
+  forceRefresh: boolean = false
 ): Promise<string[]> {
+  const cached = bookedSlotsCache.get(dateStr);
+  if (!forceRefresh && cached && Date.now() < cached.expiresAt) {
+    return cached.times;
+  }
+
+  let booked: string[] = [];
+
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase
@@ -280,7 +307,7 @@ export async function getBookedSlotsForDate(
         .in("status", ["confirmed", "pending"]);
 
       if (!error && data) {
-        return data.map((item) => {
+        booked = data.map((item) => {
           // Normalize "10:15:00" to "10:15"
           const time = item.slot_start_time;
           return time.length === 8 ? time.substring(0, 5) : time;
@@ -292,10 +319,16 @@ export async function getBookedSlotsForDate(
   }
 
   // Fallback: Local Storage
-  const all = getLocalAppointments();
-  return all
-    .filter((a) => a.appointment_date === dateStr && a.status !== "cancelled")
-    .map((a) => (a.slot_start_time.length === 8 ? a.slot_start_time.substring(0, 5) : a.slot_start_time));
+  if (booked.length === 0) {
+    const all = getLocalAppointments();
+    booked = all
+      .filter((a) => a.appointment_date === dateStr && a.status !== "cancelled")
+      .map((a) => (a.slot_start_time.length === 8 ? a.slot_start_time.substring(0, 5) : a.slot_start_time));
+  }
+
+  // Cache for 10 seconds for ultra-responsive UI
+  bookedSlotsCache.set(dateStr, { times: booked, expiresAt: Date.now() + 10000 });
+  return booked;
 }
 
 // Book a New Appointment (Collision Checked & Validated)
@@ -335,8 +368,8 @@ export async function bookAppointment(params: {
 
   const slot_end_time = params.slot_end_time || addMinutesToTime(slot_start_time, 15);
 
-  // Check collision
-  const booked = await getBookedSlotsForDate(appointment_date);
+  // Check collision with force refresh
+  const booked = await getBookedSlotsForDate(appointment_date, DEFAULT_CLINIC_SLUG, true);
   const normalizedStart = slot_start_time.length === 8 ? slot_start_time.substring(0, 5) : slot_start_time;
   if (booked.includes(normalizedStart)) {
     return {
@@ -360,16 +393,10 @@ export async function bookAppointment(params: {
     created_at: new Date().toISOString(),
   };
 
-  // Try Supabase first
+  // Try Supabase first (using direct UUID for blazing speed)
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data: clinic } = await supabase
-        .from("clinics")
-        .select("id")
-        .eq("slug", params.clinicSlug || DEFAULT_CLINIC_SLUG)
-        .single();
-
-      const clinicId = clinic?.id || "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
+      const clinicId = DEFAULT_CLINIC_UUID;
 
       const { data, error } = await supabase
         .from("appointments")
@@ -396,6 +423,9 @@ export async function bookAppointment(params: {
       console.warn("Supabase insert failed, persisting to local storage", err);
     }
   }
+
+  // Invalidate slot cache for this date
+  bookedSlotsCache.delete(appointment_date);
 
   // Always keep local storage in sync
   const all = getLocalAppointments();

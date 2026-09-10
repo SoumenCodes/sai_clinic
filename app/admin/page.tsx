@@ -33,10 +33,18 @@ import {
   formatTime12h,
   formatDateDisplay,
   formatDateWithDay,
+  getLocalDateString,
+  getTomorrowDateString,
 } from "@/lib/booking-service";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
-function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?: string }) {
+function WhatsAppIcon({
+  size = 18,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <svg
       width={size}
@@ -57,12 +65,21 @@ function WhatsAppIcon({ size = 18, className = "" }: { size?: number; className?
 }
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"appointments" | "settings" | "database">("appointments");
+  const [activeTab, setActiveTab] = useState<
+    "appointments" | "settings" | "database"
+  >("appointments");
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Local timezone safe today & tomorrow
+  const todayStr = getLocalDateString();
+  const tomorrowStr = getTomorrowDateString();
+
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const [searchQuery, setSearchQuery] = useState("");
-  const [settings, setSettings] = useState<ClinicScheduleSettings>(getLocalSettings());
+  const [settings, setSettings] =
+    useState<ClinicScheduleSettings>(getLocalSettings());
   const [settingsSaved, setSettingsSaved] = useState(false);
 
   const shift1StartId = useId();
@@ -71,30 +88,48 @@ export default function AdminPage() {
   const shift2EndId = useId();
   const slotDurationId = useId();
 
-  const todayStr = new Date().toISOString().split("T")[0];
-  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().split("T")[0];
-
-  const loadAppointments = async () => {
-    setLoading(true);
-    const data = await getAdminAppointments(selectedDate || undefined);
-    setAppointments(data);
-    setLoading(false);
+  const loadAppointments = async (showLoadingState = true) => {
+    if (showLoadingState) setLoading(true);
+    setRefreshing(true);
+    try {
+      // Fetch all active appointments once so date filters & counts are instant (0ms)
+      const data = await getAdminAppointments();
+      setAppointments(data);
+    } catch (err) {
+      console.error("Failed to load appointments", err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
-    loadAppointments();
+    loadAppointments(true);
     setSettings(getLocalSettings());
-  }, [selectedDate]);
+  }, []);
 
-  const handleStatusChange = async (id: string, newStatus: "confirmed" | "completed" | "cancelled") => {
-    await updateAppointmentStatus(id, newStatus);
-    loadAppointments();
+  // Instant optimistic status update (0ms UI latency)
+  const handleStatusChange = async (
+    id: string,
+    newStatus: "confirmed" | "completed" | "cancelled",
+  ) => {
+    setAppointments((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, status: newStatus } : item,
+      ),
+    );
+    updateAppointmentStatus(id, newStatus);
   };
 
+  // Instant optimistic deletion (0ms UI latency)
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to remove this appointment? The slot will become available again.")) {
-      await deleteAppointment(id);
-      loadAppointments();
+    if (
+      confirm(
+        "Are you sure you want to remove this appointment? The slot will become available again.",
+      )
+    ) {
+      setAppointments((prev) => prev.filter((item) => item.id !== id));
+      deleteAppointment(id);
     }
   };
 
@@ -105,7 +140,21 @@ export default function AdminPage() {
     setTimeout(() => setSettingsSaved(false), 3000);
   };
 
-  const filteredAppointments = appointments.filter((apt) => {
+  // Live count computations
+  const todayCount = appointments.filter(
+    (a) => a.appointment_date === todayStr && a.status !== "cancelled",
+  ).length;
+  const tomorrowCount = appointments.filter(
+    (a) => a.appointment_date === tomorrowStr && a.status !== "cancelled",
+  ).length;
+  const allCount = appointments.filter((a) => a.status !== "cancelled").length;
+
+  // In-memory instant date filtering
+  const dateFilteredAppointments = selectedDate
+    ? appointments.filter((apt) => apt.appointment_date === selectedDate)
+    : appointments;
+
+  const filteredAppointments = dateFilteredAppointments.filter((apt) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -145,7 +194,9 @@ export default function AdminPage() {
                   Doctor Admin
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">Baridih, Jamshedpur • 15-Minute Slot Management</p>
+              <p className="text-[11px] text-slate-400">
+                Baridih, Jamshedpur • 15-Minute Slot Management
+              </p>
             </div>
           </div>
 
@@ -162,21 +213,21 @@ export default function AdminPage() {
         </div>
 
         {/* 2. ADMIN TABS */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-2 border-t border-slate-800/80 pt-1">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-2 border-t border-slate-800/80 pt-1 overflow-x-auto whitespace-nowrap scrollbar-none">
           <button
             onClick={() => setActiveTab("appointments")}
-            className={`px-4 py-2.5 text-xs font-bold border-b-2 flex items-center gap-1.5 transition ${
+            className={`px-4 py-2.5 text-xs font-bold border-b-2 shrink-0 flex items-center gap-1.5 transition ${
               activeTab === "appointments"
                 ? "border-emerald-500 text-emerald-400"
                 : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
             <Calendar size={15} />
-            <span>Appointments Feed</span>
+            <span>Appointments</span>
           </button>
           <button
             onClick={() => setActiveTab("settings")}
-            className={`px-4 py-2.5 text-xs font-bold border-b-2 flex items-center gap-1.5 transition ${
+            className={`px-4 py-2.5 text-xs font-bold border-b-2 shrink-0 flex items-center gap-1.5 transition ${
               activeTab === "settings"
                 ? "border-emerald-500 text-emerald-400"
                 : "border-transparent text-slate-400 hover:text-slate-200"
@@ -187,68 +238,109 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab("database")}
-            className={`px-4 py-2.5 text-xs font-bold border-b-2 flex items-center gap-1.5 transition ${
+            className={`px-4 py-2.5 text-xs font-bold border-b-2 shrink-0 flex items-center gap-1.5 transition ${
               activeTab === "database"
                 ? "border-emerald-500 text-emerald-400"
                 : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
             <Database size={15} />
-            <span>Supabase DB Config</span>
+            <span>DB Config</span>
           </button>
         </div>
       </header>
 
       {/* 3. TAB 1: APPOINTMENTS FEED */}
       {activeTab === "appointments" && (
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
           {/* Quick Date Filters & Search */}
           <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
+              {/* Today Button with Count Badge */}
               <button
                 onClick={() => setSelectedDate(todayStr)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
                   selectedDate === todayStr
-                    ? "bg-emerald-700 text-white shadow-sm"
+                    ? "bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/30"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
-                Today
-              </button>
-              <button
-                onClick={() => setSelectedDate(tomorrowStr)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
-                  selectedDate === tomorrowStr
-                    ? "bg-emerald-700 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                Tomorrow
-              </button>
-              <button
-                onClick={() => setSelectedDate("")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
-                  selectedDate === ""
-                    ? "bg-emerald-700 text-white shadow-sm"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                All Dates
+                <span>Today</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+                    selectedDate === todayStr
+                      ? "bg-white/25 text-white"
+                      : todayCount > 0
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {todayCount}
+                </span>
               </button>
 
-              <div className="flex items-center gap-1 pl-2 border-l border-slate-200">
-                <span className="text-[11px] text-slate-400 font-semibold">Custom:</span>
+              {/* Tomorrow Button with Count Badge */}
+              <button
+                onClick={() => setSelectedDate(tomorrowStr)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  selectedDate === tomorrowStr
+                    ? "bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/30"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                <span>Tomorrow</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+                    selectedDate === tomorrowStr
+                      ? "bg-white/25 text-white"
+                      : tomorrowCount > 0
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {tomorrowCount}
+                </span>
+              </button>
+
+              {/* All Dates Button with Count Badge */}
+              <button
+                onClick={() => setSelectedDate("")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 ${
+                  selectedDate === ""
+                    ? "bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-600/30"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                <span>All Dates</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
+                    selectedDate === ""
+                      ? "bg-white/25 text-white"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
+                >
+                  {allCount}
+                </span>
+              </button>
+
+              <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+                <span className="text-[11px] text-slate-400 font-semibold">
+                  Custom:
+                </span>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-2.5 py-1 rounded-lg border border-slate-300 text-xs bg-slate-50 text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                  className="px-2.5 py-1 rounded-lg border border-slate-300 text-xs bg-slate-50 text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-600 font-semibold"
                 />
               </div>
             </div>
 
             <div className="relative flex-1 max-w-xs">
-              <Search size={15} className="absolute left-3 top-2.5 text-slate-400" />
+              <Search
+                size={15}
+                className="absolute left-3 top-2.5 text-slate-400"
+              />
               <input
                 type="text"
                 placeholder="Search patient name or phone..."
@@ -259,34 +351,56 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Metric Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] uppercase font-bold text-slate-400">Total Bookings</div>
-              <div className="text-2xl font-black text-slate-900 mt-1">{filteredAppointments.length}</div>
-              <div className="text-[11px] text-emerald-700 font-semibold mt-0.5">
+          {/* Metric Cards (Clean 2x2 Grid on Mobile, 4-col on Desktop) */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs">
+              <div className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
+                Total Bookings
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 sm:mt-1">
+                {filteredAppointments.length}
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-emerald-700 font-semibold mt-0.5 truncate">
                 {selectedDate ? formatDateDisplay(selectedDate) : "All time"}
               </div>
             </div>
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] uppercase font-bold text-slate-400">Morning Shift (10AM - 2PM)</div>
-              <div className="text-2xl font-black text-emerald-800 mt-1">{morningBookings.length}</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">15-min slots</div>
-            </div>
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] uppercase font-bold text-slate-400">Evening Shift (5PM - 10PM)</div>
-              <div className="text-2xl font-black text-teal-800 mt-1">{eveningBookings.length}</div>
-              <div className="text-[11px] text-slate-500 mt-0.5">15-min slots</div>
-            </div>
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
-              <div className="text-[10px] uppercase font-bold text-slate-400">Database Status</div>
-              <div className="text-sm font-black text-slate-900 mt-1 flex items-center gap-1.5">
-                <span
-                  className={`w-2.5 h-2.5 rounded-full ${isSupabaseConfigured ? "bg-emerald-500" : "bg-amber-500"}`}
-                ></span>
-                <span>{isSupabaseConfigured ? "Supabase Live" : "Local Demo Mode"}</span>
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs">
+              <div className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
+                Morning Shift
               </div>
-              <div className="text-[10px] text-slate-500 mt-1">Multi-tenant ready</div>
+              <div className="text-xl sm:text-2xl font-black text-emerald-800 mt-0.5 sm:mt-1">
+                {morningBookings.length}
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
+                10 AM – 2 PM
+              </div>
+            </div>
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs">
+              <div className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
+                Evening Shift
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-teal-800 mt-0.5 sm:mt-1">
+                {eveningBookings.length}
+              </div>
+              <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
+                5 PM – 10 PM
+              </div>
+            </div>
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs">
+              <div className="text-[10px] sm:text-xs uppercase font-bold text-slate-400 truncate">
+                Database Status
+              </div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 mt-1 flex items-center gap-1.5 truncate">
+                <span
+                  className={`w-2 h-2 sm:w-2.5 sm:h-2.5 shrink-0 rounded-full ${isSupabaseConfigured ? "bg-emerald-500" : "bg-amber-500"}`}
+                ></span>
+                <span className="truncate">
+                  {isSupabaseConfigured ? "Supabase Live" : "Local Demo"}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-500 mt-0.5 sm:mt-1">
+                Multi-tenant ready
+              </div>
             </div>
           </div>
 
@@ -295,31 +409,41 @@ export default function AdminPage() {
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
                 <Calendar size={18} className="text-emerald-700" />
-                <span>Patient Queue &amp; Slots</span>
+                <span>Patient List &amp; Slots</span>
               </h2>
               <button
-                onClick={loadAppointments}
-                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
-                title="Refresh"
+                onClick={() => loadAppointments(false)}
+                disabled={refreshing}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5 text-xs font-semibold"
+                title="Refresh live data"
               >
-                <RefreshCw size={15} />
+                <RefreshCw
+                  size={13}
+                  className={refreshing ? "animate-spin text-emerald-700" : ""}
+                />
+                <span>Refresh</span>
               </button>
             </div>
 
             {loading ? (
-              <div className="p-12 text-center text-slate-400 text-sm">Loading appointments...</div>
+              <div className="p-12 text-center text-slate-400 text-sm">
+                Loading appointments...
+              </div>
             ) : filteredAppointments.length === 0 ? (
               <div className="p-12 text-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
                   <Calendar size={24} />
                 </div>
-                <h3 className="text-base font-bold text-slate-800">No appointments found</h3>
+                <h3 className="text-base font-bold text-slate-800">
+                  No appointments found
+                </h3>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  There are no bookings for the selected date. Any new patient booking from the website will automatically appear here!
+                  There are no bookings for the selected date. Any new patient
+                  booking from the website will automatically appear here!
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="p-3 sm:p-5 space-y-3.5 bg-slate-50/50">
                 {filteredAppointments.map((apt) => {
                   const isDone = apt.status === "completed";
                   const isCancelled = apt.status === "cancelled";
@@ -327,116 +451,149 @@ export default function AdminPage() {
                   return (
                     <div
                       key={apt.id}
-                      className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition ${
-                        isDone ? "bg-slate-50/60 opacity-80" : isCancelled ? "bg-red-50/30 opacity-70" : "hover:bg-slate-50/80"
+                      className={`p-3.5 sm:p-5 rounded-2xl border-2 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-xs ${
+                        isDone
+                          ? "border-emerald-800/70 bg-emerald-50/20 opacity-85 hover:border-emerald-800"
+                          : isCancelled
+                            ? "border-slate-300 bg-red-50/20 opacity-70 hover:border-slate-400"
+                            : "border-emerald-800 bg-white hover:border-emerald-900 hover:shadow-md"
                       }`}
                     >
                       {/* Left Slot Time & Patient Info */}
-                      <div className="flex items-start gap-3.5">
+                      <div className="flex items-start gap-3 sm:gap-3.5">
                         {/* 15-Minute Slot Badge */}
-                        <div className="w-20 sm:w-24 shrink-0 p-2 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
-                          <div className="text-xs sm:text-sm font-black text-emerald-900">
+                        <div className="w-20 sm:w-24 shrink-0 p-2 sm:p-2.5 rounded-xl bg-emerald-900 text-white text-center shadow-2xs border border-emerald-950">
+                          <div className="text-xs sm:text-sm font-black text-white tracking-tight">
                             {formatTime12h(apt.slot_start_time)}
                           </div>
-                          <div className="text-[10px] text-emerald-700 font-semibold mt-0.5">
+                          <div className="text-[10px] text-emerald-200 font-semibold mt-0.5">
                             to {formatTime12h(apt.slot_end_time)}
                           </div>
-                          <div className="text-[9px] uppercase font-bold text-slate-400 mt-1">15 Mins</div>
+                          <div className="text-[9px] uppercase font-bold text-emerald-300/80 mt-0.5 sm:mt-1">
+                            15 Mins
+                          </div>
                         </div>
 
                         {/* Patient Details */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-extrabold text-slate-900">{apt.patient_name}</span>
+                        <div className="space-y-1.5 min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <span className="text-sm sm:text-base font-extrabold text-slate-900 break-words">
+                              {apt.patient_name}
+                            </span>
                             {apt.patient_age && (
-                              <span className="text-[11px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded">
+                              <span className="text-[10px] sm:text-[11px] text-slate-600 font-bold bg-slate-100 border border-slate-200 px-1.5 sm:px-2 py-0.5 rounded-full">
                                 {apt.patient_age} yrs
                               </span>
                             )}
                             <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                              className={`text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
                                 isDone
-                                  ? "bg-blue-100 text-blue-800"
+                                  ? "bg-blue-50 text-blue-800 border-blue-200"
                                   : isCancelled
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-emerald-100 text-emerald-800"
+                                    ? "bg-red-50 text-red-800 border-red-200"
+                                    : "bg-emerald-100 text-emerald-900 border-emerald-300"
                               }`}
                             >
                               {apt.status.toUpperCase()}
                             </span>
                           </div>
 
-                          <div className="text-xs text-slate-600 font-medium">
-                            <span>Concern: </span>
-                            <span className="font-bold text-slate-800">{apt.problem}</span>
+                          <div className="text-xs text-slate-600 font-medium flex items-center gap-1.5 flex-wrap">
+                            <span className="text-slate-500 font-semibold text-[11px] sm:text-xs">
+                              Concern:
+                            </span>
+                            <span className="font-bold text-emerald-950 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/80 text-[11px] sm:text-xs">
+                              {apt.problem}
+                            </span>
                           </div>
 
-                          <div className="flex items-center gap-3 text-xs text-slate-500 pt-0.5">
-                            <span>Date: <strong className="text-slate-800">{formatDateDisplay(apt.appointment_date)}</strong></span>
+                          <div className="flex items-center gap-2 text-[11px] sm:text-xs text-slate-500 pt-0.5 flex-wrap">
+                            <span className="flex items-center gap-1 font-semibold text-slate-700">
+                              <span>Date:</span>
+                              <strong className="text-emerald-900 font-extrabold">
+                                {formatDateDisplay(apt.appointment_date)}
+                              </strong>
+                            </span>
                             <span>•</span>
-                            <span className="capitalize">{apt.consultation_mode}</span>
+                            <span className="capitalize font-medium text-slate-600">
+                              {apt.consultation_mode === "in-clinic"
+                                ? "🏥 In-Clinic"
+                                : "📱 Online"}
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Right Action Buttons */}
-                      <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                        {/* Call Button */}
-                        <a
-                          href={`tel:${apt.patient_phone}`}
-                          className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition"
-                          title="Call Patient"
-                        >
-                          <Phone size={13} className="text-emerald-700" />
-                          <span>{apt.patient_phone}</span>
-                        </a>
-
-                        {/* WhatsApp Button */}
-                        <a
-                          href={`https://wa.me/91${apt.patient_phone.replace(/\D/g, "")}?text=Hello%20${encodeURIComponent(
-                            apt.patient_name
-                          )},%20regarding%20your%20appointment%20at%20Sai%20Homoeo%20Clinic%20on%20${encodeURIComponent(
-                            formatDateDisplay(apt.appointment_date)
-                          )}%20at%20${encodeURIComponent(formatTime12h(apt.slot_start_time))}.`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition"
-                          title="WhatsApp Patient"
-                        >
-                          <WhatsAppIcon size={14} className="text-white" />
-                          <span>WhatsApp</span>
-                        </a>
-
-                        {/* Mark Completed Toggle */}
-                        {!isDone && (
-                          <button
-                            onClick={() => handleStatusChange(apt.id, "completed")}
-                            className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition"
-                            title="Mark as Completed"
+                      {/* Right Action Buttons (2-tier responsive mobile layout) */}
+                      <div className="w-full sm:w-auto shrink-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex flex-col sm:flex-row sm:items-center gap-2">
+                        {/* 1. Call & WhatsApp Actions */}
+                        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+                          {/* Call Button */}
+                          <a
+                            href={`tel:${apt.patient_phone}`}
+                            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-900 hover:border-emerald-300 border border-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-2xs"
+                            title="Call Patient"
                           >
-                            <CheckCircle2 size={18} />
-                          </button>
-                        )}
+                            <Phone size={13} className="text-emerald-700 shrink-0" />
+                            <span className="truncate">{apt.patient_phone}</span>
+                          </a>
 
-                        {/* Cancel / Free Slot */}
-                        {!isCancelled && (
-                          <button
-                            onClick={() => handleStatusChange(apt.id, "cancelled")}
-                            className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition"
-                            title="Cancel Appointment & Free Slot"
+                          {/* WhatsApp Button */}
+                          <a
+                            href={`https://wa.me/91${apt.patient_phone.replace(/\D/g, "")}?text=Hello%20${encodeURIComponent(
+                              apt.patient_name,
+                            )},%20regarding%20your%20appointment%20at%20Sai%20Homoeo%20Clinic%20on%20${encodeURIComponent(
+                              formatDateDisplay(apt.appointment_date),
+                            )}%20at%20${encodeURIComponent(formatTime12h(apt.slot_start_time))}.`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3.5 py-2 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition"
+                            title="WhatsApp Patient"
                           >
-                            <XCircle size={18} />
-                          </button>
-                        )}
+                            <WhatsAppIcon size={14} className="text-white shrink-0" />
+                            <span>WhatsApp</span>
+                          </a>
+                        </div>
 
-                        {/* Delete Permanently */}
-                        <button
-                          onClick={() => handleDelete(apt.id)}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-400 transition"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {/* 2. Management Controls (Complete, Cancel, Delete) */}
+                        <div className="flex items-center justify-end sm:justify-start gap-1.5 pt-0.5 sm:pt-0">
+                          {/* Mark Completed Toggle */}
+                          {!isDone && (
+                            <button
+                              onClick={() =>
+                                handleStatusChange(apt.id, "completed")
+                              }
+                              className="px-2.5 py-1.5 sm:p-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 transition flex items-center gap-1 text-xs font-bold"
+                              title="Mark as Completed"
+                            >
+                              <CheckCircle2 size={16} />
+                              <span className="sm:hidden text-[11px]">Complete</span>
+                            </button>
+                          )}
+
+                          {/* Cancel / Free Slot */}
+                          {!isCancelled && (
+                            <button
+                              onClick={() =>
+                                handleStatusChange(apt.id, "cancelled")
+                              }
+                              className="px-2.5 py-1.5 sm:p-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 transition flex items-center gap-1 text-xs font-bold"
+                              title="Cancel Appointment & Free Slot"
+                            >
+                              <XCircle size={16} />
+                              <span className="sm:hidden text-[11px]">Cancel</span>
+                            </button>
+                          )}
+
+                          {/* Delete Permanently */}
+                          <button
+                            onClick={() => handleDelete(apt.id)}
+                            className="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-700 border border-slate-200 hover:border-red-200 text-slate-400 transition ml-auto sm:ml-0"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -449,21 +606,26 @@ export default function AdminPage() {
 
       {/* 4. TAB 2: CLINIC TIMINGS & SHIFTS */}
       {activeTab === "settings" && (
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
             <div className="badge-pill bg-emerald-100 text-emerald-800 mb-2">
               <Clock size={13} />
               <span>CLINIC SHIFT HOURS</span>
             </div>
-            <h2 className="text-2xl font-black text-slate-900 mb-1">Manage Clinic Shifts &amp; Slot Duration</h2>
+            <h2 className="text-2xl font-black text-slate-900 mb-1">
+              Manage Clinic Shifts &amp; Slot Duration
+            </h2>
             <p className="text-xs text-slate-500 mb-6">
-              Adjust your daily morning and evening consultation shifts. Slot calculations will automatically adapt.
+              Adjust your daily morning and evening consultation shifts. Slot
+              calculations will automatically adapt.
             </p>
 
             {settingsSaved && (
               <div className="mb-6 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
                 <Check size={16} />
-                <span>Shift timings and slot duration updated successfully!</span>
+                <span>
+                  Shift timings and slot duration updated successfully!
+                </span>
               </div>
             )}
 
@@ -476,30 +638,47 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor={shift1StartId} className="block text-xs font-bold text-slate-700 mb-1">
+                    <label
+                      htmlFor={shift1StartId}
+                      className="block text-xs font-bold text-slate-700 mb-1"
+                    >
                       Opening Time (24h)
                     </label>
                     <input
                       id={shift1StartId}
                       type="time"
                       value={settings.shift1Start}
-                      onChange={(e) => setSettings({ ...settings, shift1Start: e.target.value })}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          shift1Start: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold bg-white"
                     />
-                    <span className="text-[10px] text-slate-400">e.g. 10:00 AM</span>
+                    <span className="text-[10px] text-slate-400">
+                      e.g. 10:00 AM
+                    </span>
                   </div>
                   <div>
-                    <label htmlFor={shift1EndId} className="block text-xs font-bold text-slate-700 mb-1">
+                    <label
+                      htmlFor={shift1EndId}
+                      className="block text-xs font-bold text-slate-700 mb-1"
+                    >
                       Closing Time (24h)
                     </label>
                     <input
                       id={shift1EndId}
                       type="time"
                       value={settings.shift1End}
-                      onChange={(e) => setSettings({ ...settings, shift1End: e.target.value })}
+                      onChange={(e) =>
+                        setSettings({ ...settings, shift1End: e.target.value })
+                      }
                       className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold bg-white"
                     />
-                    <span className="text-[10px] text-slate-400">e.g. 02:00 PM (14:00)</span>
+                    <span className="text-[10px] text-slate-400">
+                      e.g. 02:00 PM (14:00)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -512,52 +691,80 @@ export default function AdminPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor={shift2StartId} className="block text-xs font-bold text-slate-700 mb-1">
+                    <label
+                      htmlFor={shift2StartId}
+                      className="block text-xs font-bold text-slate-700 mb-1"
+                    >
                       Opening Time (24h)
                     </label>
                     <input
                       id={shift2StartId}
                       type="time"
                       value={settings.shift2Start}
-                      onChange={(e) => setSettings({ ...settings, shift2Start: e.target.value })}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          shift2Start: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold bg-white"
                     />
-                    <span className="text-[10px] text-slate-400">e.g. 05:00 PM (17:00)</span>
+                    <span className="text-[10px] text-slate-400">
+                      e.g. 05:00 PM (17:00)
+                    </span>
                   </div>
                   <div>
-                    <label htmlFor={shift2EndId} className="block text-xs font-bold text-slate-700 mb-1">
+                    <label
+                      htmlFor={shift2EndId}
+                      className="block text-xs font-bold text-slate-700 mb-1"
+                    >
                       Closing Time (24h)
                     </label>
                     <input
                       id={shift2EndId}
                       type="time"
                       value={settings.shift2End}
-                      onChange={(e) => setSettings({ ...settings, shift2End: e.target.value })}
+                      onChange={(e) =>
+                        setSettings({ ...settings, shift2End: e.target.value })
+                      }
                       className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold bg-white"
                     />
-                    <span className="text-[10px] text-slate-400">e.g. 10:00 PM (22:00)</span>
+                    <span className="text-[10px] text-slate-400">
+                      e.g. 10:00 PM (22:00)
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* Slot Duration */}
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <label htmlFor={slotDurationId} className="block text-xs font-bold text-slate-700">
+                <label
+                  htmlFor={slotDurationId}
+                  className="block text-xs font-bold text-slate-700"
+                >
                   Appointment Slot Interval
                 </label>
                 <select
                   id={slotDurationId}
                   value={settings.slotDurationMinutes}
-                  onChange={(e) => setSettings({ ...settings, slotDurationMinutes: parseInt(e.target.value, 10) })}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      slotDurationMinutes: parseInt(e.target.value, 10),
+                    })
+                  }
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white"
                 >
                   <option value={10}>10 Minutes per patient</option>
-                  <option value={15}>15 Minutes per patient (Recommended Default)</option>
+                  <option value={15}>
+                    15 Minutes per patient (Recommended Default)
+                  </option>
                   <option value={20}>20 Minutes per patient</option>
                   <option value={30}>30 Minutes per patient</option>
                 </select>
                 <p className="text-[11px] text-slate-500">
-                  Changing this duration recalculates all future available slots automatically on the website.
+                  Changing this duration recalculates all future available slots
+                  automatically on the website.
                 </p>
               </div>
 
@@ -575,15 +782,19 @@ export default function AdminPage() {
 
       {/* 5. TAB 3: SUPABASE DB CONFIG & MULTI-TENANCY */}
       {activeTab === "database" && (
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-6">
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-6">
             <div className="badge-pill bg-emerald-100 text-emerald-800 mb-2">
               <Database size={13} />
               <span>DATABASE ARCHITECTURE</span>
             </div>
-            <h2 className="text-2xl font-black text-slate-900">Supabase Multi-Tenant Integration</h2>
+            <h2 className="text-2xl font-black text-slate-900">
+              Supabase Multi-Tenant Integration
+            </h2>
             <p className="text-xs text-slate-600 leading-relaxed">
-              This system is built with a partitioned multi-tenant schema. You can host multiple clinics or multiple doctor websites using a single Supabase project.
+              This system is built with a partitioned multi-tenant schema. You
+              can host multiple clinics or multiple doctor websites using a
+              single Supabase project.
             </p>
 
             {/* Connection Status Box */}
@@ -598,7 +809,11 @@ export default function AdminPage() {
                 <span
                   className={`w-3 h-3 rounded-full ${isSupabaseConfigured ? "bg-emerald-600" : "bg-amber-500"}`}
                 ></span>
-                <span>{isSupabaseConfigured ? "Supabase Connected & Active" : "Local Storage Demo Mode Active"}</span>
+                <span>
+                  {isSupabaseConfigured
+                    ? "Supabase Connected & Active"
+                    : "Local Storage Demo Mode Active"}
+                </span>
               </div>
               <p className="text-xs mt-1 text-slate-600">
                 {isSupabaseConfigured
@@ -609,23 +824,36 @@ export default function AdminPage() {
 
             {/* Setup Instructions */}
             <div className="space-y-4 pt-2">
-              <h3 className="text-sm font-extrabold text-slate-900">How to connect your Supabase project:</h3>
+              <h3 className="text-sm font-extrabold text-slate-900">
+                How to connect your Supabase project:
+              </h3>
 
               <div className="p-4 rounded-2xl bg-slate-900 text-slate-200 text-xs font-mono space-y-2 overflow-x-auto">
-                <div className="text-slate-400"># 1. Create a file named .env.local in your project root:</div>
-                <div>NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co</div>
+                <div className="text-slate-400">
+                  # 1. Create a file named .env.local in your project root:
+                </div>
+                <div>
+                  NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+                </div>
                 <div>NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key</div>
               </div>
 
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                <div className="font-bold text-slate-900">2. Run SQL Schema:</div>
+                <div className="font-bold text-slate-900">
+                  2. Run SQL Schema:
+                </div>
                 <p className="text-slate-600">
-                  Open your Supabase Dashboard &gt; <strong>SQL Editor</strong> &gt; Paste the contents of{" "}
-                  <code className="bg-slate-200 px-1 py-0.5 rounded text-slate-800">supabase-schema.sql</code> and click{" "}
-                  <strong>Run</strong>.
+                  Open your Supabase Dashboard &gt; <strong>SQL Editor</strong>{" "}
+                  &gt; Paste the contents of{" "}
+                  <code className="bg-slate-200 px-1 py-0.5 rounded text-slate-800">
+                    supabase-schema.sql
+                  </code>{" "}
+                  and click <strong>Run</strong>.
                 </p>
                 <p className="text-[11px] text-emerald-800 font-semibold">
-                  ✓ It automatically creates tables, unique 15-minute slot collision constraints, RLS policies, and seed data for Sai Homoeo Clinic!
+                  ✓ It automatically creates tables, unique 15-minute slot
+                  collision constraints, RLS policies, and seed data for Sai
+                  Homoeo Clinic!
                 </p>
               </div>
             </div>
