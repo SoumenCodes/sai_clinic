@@ -75,6 +75,43 @@ export function addMinutesToTime(time24: string, minutesToAdd: number): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 }
 
+// Helper: Format "YYYY-MM-DD" to "10 Sep 2026"
+export function formatDateDisplay(dateStr: string): string {
+  if (!dateStr) return "";
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+    const year = parseInt(parts[0], 10);
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthName = months[monthIndex] || "";
+    return `${day} ${monthName} ${year}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+// Helper: Format "YYYY-MM-DD" to "Thu, 10 Sep 2026"
+export function formatDateWithDay(dateStr: string): string {
+  if (!dateStr) return "";
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+    const year = parseInt(parts[0], 10);
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(year, monthIndex, day);
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dayName = days[d.getDay()] || "";
+    const monthName = months[monthIndex] || "";
+    return `${dayName}, ${day} ${monthName} ${year}`;
+  } catch {
+    return dateStr;
+  }
+}
+
 // Helper: Convert "HH:MM" to minutes from midnight
 function timeToMinutes(time24: string): number {
   const [h, m] = time24.split(":").map((v) => parseInt(v, 10));

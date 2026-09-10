@@ -31,6 +31,8 @@ import {
   getLocalSettings,
   saveLocalSettings,
   formatTime12h,
+  formatDateDisplay,
+  formatDateWithDay,
 } from "@/lib/booking-service";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
@@ -263,7 +265,7 @@ export default function AdminPage() {
               <div className="text-[10px] uppercase font-bold text-slate-400">Total Bookings</div>
               <div className="text-2xl font-black text-slate-900 mt-1">{filteredAppointments.length}</div>
               <div className="text-[11px] text-emerald-700 font-semibold mt-0.5">
-                {selectedDate ? selectedDate : "All time"}
+                {selectedDate ? formatDateDisplay(selectedDate) : "All time"}
               </div>
             </div>
             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
@@ -370,7 +372,7 @@ export default function AdminPage() {
                           </div>
 
                           <div className="flex items-center gap-3 text-xs text-slate-500 pt-0.5">
-                            <span>Date: <strong className="text-slate-700">{apt.appointment_date}</strong></span>
+                            <span>Date: <strong className="text-slate-800">{formatDateDisplay(apt.appointment_date)}</strong></span>
                             <span>•</span>
                             <span className="capitalize">{apt.consultation_mode}</span>
                           </div>
@@ -393,9 +395,9 @@ export default function AdminPage() {
                         <a
                           href={`https://wa.me/91${apt.patient_phone.replace(/\D/g, "")}?text=Hello%20${encodeURIComponent(
                             apt.patient_name
-                          )},%20regarding%20your%20appointment%20at%20Sai%20Homoeo%20Clinic%20on%20${
-                            apt.appointment_date
-                          }%20at%20${formatTime12h(apt.slot_start_time)}.`}
+                          )},%20regarding%20your%20appointment%20at%20Sai%20Homoeo%20Clinic%20on%20${encodeURIComponent(
+                            formatDateDisplay(apt.appointment_date)
+                          )}%20at%20${encodeURIComponent(formatTime12h(apt.slot_start_time))}.`}
                           target="_blank"
                           rel="noreferrer"
                           className="px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition"

@@ -34,6 +34,8 @@ import {
   bookAppointment,
   getLocalSettings,
   formatTime12h,
+  formatDateDisplay,
+  formatDateWithDay,
 } from "@/lib/booking-service";
 
 const CLINIC_NAME = "Sai Homoeo Clinic";
@@ -147,11 +149,13 @@ export default function HomePage() {
     problem: "General Consultation",
     visitType: "in-clinic" as "in-clinic" | "online",
   });
+  const [customProblem, setCustomProblem] = useState("");
 
   const nameInputId = useId();
   const phoneInputId = useId();
   const ageInputId = useId();
   const problemSelectId = useId();
+  const customProblemInputId = useId();
   const typeSelectId = useId();
 
   // Load available 15-minute slots whenever selectedDate or modal status changes
@@ -199,12 +203,17 @@ export default function HomePage() {
       return;
     }
 
+    const effectiveProblem =
+      patientData.problem === "Other"
+        ? customProblem.trim() || "Other Health Concern"
+        : patientData.problem;
+
     setIsSubmitting(true);
     const res = await bookAppointment({
       patient_name: patientData.name,
       patient_phone: patientData.phone,
       patient_age: patientData.age ? parseInt(patientData.age, 10) : undefined,
-      problem: patientData.problem,
+      problem: effectiveProblem,
       appointment_date: selectedDate,
       slot_start_time: selectedSlot.startTime,
       slot_end_time: selectedSlot.endTime,
@@ -225,8 +234,13 @@ export default function HomePage() {
   };
 
   const handleOpenWhatsAppBooking = () => {
+    const effectiveProblem =
+      patientData.problem === "Other"
+        ? customProblem.trim() || "Other Health Concern"
+        : patientData.problem;
     const slotLabel = selectedSlot ? `${selectedSlot.timeLabel} (${selectedSlot.displayLabel})` : "Preferred Slot";
-    const message = `Hello Sai Homoeo Clinic! I booked a 15-minute consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A🎂 *Age:* ${patientData.age || "N/A"}%0A🩺 *Health Concern:* ${patientData.problem}%0A📅 *Date:* ${selectedDate}%0A⏰ *Time Slot:* ${slotLabel}%0A📍 *Mode:* ${patientData.visitType === "in-clinic" ? "In-Clinic (Baridih)" : "Online Consult"}%0A%0APlease confirm my appointment.`;
+    const formattedDate = formatDateDisplay(selectedDate);
+    const message = `Hello Sai Homoeo Clinic! I booked a 15-minute consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A🎂 *Age:* ${patientData.age || "N/A"}%0A🩺 *Health Concern:* ${effectiveProblem}%0A📅 *Date:* ${formattedDate}%0A⏰ *Time Slot:* ${slotLabel}%0A📍 *Mode:* ${patientData.visitType === "in-clinic" ? "In-Clinic (Baridih)" : "Online Consult"}%0A%0APlease confirm my appointment.`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
   };
 
@@ -473,11 +487,11 @@ export default function HomePage() {
                 </div>
 
                 <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.14]">
-                  Gentle, Natural &amp; <span className="text-gradient">Permanent Healing</span> for Your Whole Family
+                  Natural Care <span className="text-gradient">for Your Family</span>
                 </h1>
 
                 <p className="text-slate-600 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
-                  Personalized classical homoeopathic care that targets the root cause of chronic illnesses without side effects. Authentic German dilutions and hygienic in-house dispensing.
+                  Personalized homoeopathic care for long-term health and chronic conditions, with a gentle and natural approach.
                 </p>
 
                 {/* 3 Quick Bullets */}
@@ -979,21 +993,24 @@ export default function HomePage() {
                   {/* STEP 1: SELECT DATE */}
                   <div>
                     <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                      <span>1. Select Appointment Date *</span>
-                      <span className="text-[11px] text-emerald-700 font-semibold">{selectedDate}</span>
+                      <span>1. Select Consultation Date *</span>
+                      <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                        {formatDateDisplay(selectedDate)} ({formatDateWithDay(selectedDate).split(",")[0]})
+                      </span>
                     </label>
 
                     <div className="grid grid-cols-3 gap-2 mb-2">
                       <button
                         type="button"
                         onClick={() => setSelectedDate(todayDateStr)}
-                        className={`py-2 px-2.5 rounded-xl text-xs font-bold text-center transition ${
+                        className={`py-2 px-2 rounded-xl text-xs font-bold text-center transition flex flex-col items-center justify-center ${
                           selectedDate === todayDateStr
                             ? "bg-emerald-700 text-white shadow-xs"
                             : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                         }`}
                       >
-                        Today
+                        <span>Today</span>
+                        <span className="text-[10px] font-normal opacity-90">{formatDateDisplay(todayDateStr)}</span>
                       </button>
                       <button
                         type="button"
@@ -1001,21 +1018,24 @@ export default function HomePage() {
                           const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
                           setSelectedDate(tomorrow);
                         }}
-                        className={`py-2 px-2.5 rounded-xl text-xs font-bold text-center transition ${
+                        className={`py-2 px-2 rounded-xl text-xs font-bold text-center transition flex flex-col items-center justify-center ${
                           selectedDate === new Date(Date.now() + 86400000).toISOString().split("T")[0]
                             ? "bg-emerald-700 text-white shadow-xs"
                             : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                         }`}
                       >
-                        Tomorrow
+                        <span>Tomorrow</span>
+                        <span className="text-[10px] font-normal opacity-90">
+                          {formatDateDisplay(new Date(Date.now() + 86400000).toISOString().split("T")[0])}
+                        </span>
                       </button>
-                      <div className="relative">
+                      <div className="relative flex flex-col justify-center">
                         <input
                           type="date"
                           min={todayDateStr}
                           value={selectedDate}
                           onChange={(e) => setSelectedDate(e.target.value)}
-                          className="w-full py-1.5 px-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 text-slate-800 text-center"
+                          className="w-full h-full py-2 px-2 rounded-xl border border-slate-300 text-xs font-bold bg-slate-50 text-slate-800 text-center"
                         />
                       </div>
                     </div>
@@ -1178,6 +1198,7 @@ export default function HomePage() {
                           <option>Joints &amp; Arthritis Pain</option>
                           <option>Kidney Stones</option>
                           <option>Child &amp; Pediatric Care</option>
+                          <option value="Other">Other</option>
                         </select>
                       </div>
                       <div>
@@ -1195,6 +1216,24 @@ export default function HomePage() {
                         </select>
                       </div>
                     </div>
+
+                    {/* Custom Health Concern if 'Other' selected */}
+                    {patientData.problem === "Other" && (
+                      <div className="pt-1">
+                        <label htmlFor={customProblemInputId} className="block text-xs font-bold text-slate-800 mb-1">
+                          Specify Health Concern / Symptoms *
+                        </label>
+                        <input
+                          id={customProblemInputId}
+                          type="text"
+                          required
+                          placeholder="e.g. Migraine, Thyroid, Back Pain, Fever, etc."
+                          value={customProblem}
+                          onChange={(e) => setCustomProblem(e.target.value)}
+                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -1216,28 +1255,35 @@ export default function HomePage() {
                 <div>
                   <h3 className="text-2xl font-black text-slate-900">15-Min Slot Confirmed!</h3>
                   <p className="text-xs text-slate-600 mt-1">
-                    Thank you, <span className="font-bold text-slate-900">{patientData.name}</span>. Your 15-minute consultation slot is booked.
+                    Thank you, <span className="font-bold text-slate-900">{patientData.name || "Patient"}</span>. Your 15-minute consultation slot is booked.
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs space-y-1.5">
-                  <div className="flex justify-between">
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left text-xs space-y-2">
+                  <div className="flex justify-between items-center">
                     <span className="font-semibold text-slate-500">Date:</span>
-                    <span className="font-extrabold text-slate-900">{selectedDate}</span>
+                    <span className="font-extrabold text-slate-900 text-sm">
+                      {formatDateDisplay(selectedDate)}
+                      <span className="text-xs font-semibold text-emerald-700 ml-1.5">
+                        ({formatDateWithDay(selectedDate).split(",")[0]})
+                      </span>
+                    </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="font-semibold text-slate-500">Reserved Slot:</span>
                     <span className="font-black text-emerald-800">{selectedSlot?.displayLabel}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="font-semibold text-slate-500">Phone:</span>
                     <span className="font-bold text-slate-900">{patientData.phone}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="font-semibold text-slate-500">Concern:</span>
-                    <span className="font-bold text-slate-900">{patientData.problem}</span>
+                    <span className="font-bold text-slate-900">
+                      {patientData.problem === "Other" ? (customProblem.trim() || "Other Health Concern") : patientData.problem}
+                    </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="font-semibold text-slate-500">Clinic:</span>
                     <span className="font-bold text-slate-900">Sai Homoeo Clinic, Baridih</span>
                   </div>
@@ -1253,7 +1299,10 @@ export default function HomePage() {
                   </button>
 
                   <button
-                    onClick={() => setBookingModalOpen(false)}
+                    onClick={() => {
+                      setBookingSubmitted(false);
+                      setBookingModalOpen(false);
+                    }}
                     className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
                   >
                     Done
