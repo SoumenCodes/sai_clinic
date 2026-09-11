@@ -67,11 +67,29 @@ CREATE TABLE IF NOT EXISTS public.blocked_slots (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Patient Medical Records & Prescription History Table
+CREATE TABLE IF NOT EXISTS public.patient_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clinic_id UUID NOT NULL REFERENCES public.clinics(id) ON DELETE CASCADE,
+    patient_phone TEXT NOT NULL, -- Key identifier for patient history
+    patient_name TEXT NOT NULL,
+    patient_age INTEGER,
+    checkup_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    diagnosis TEXT,
+    prescription_text TEXT,
+    prescription_images TEXT[], -- Array of image URLs / compressed Base64 data URIs
+    notes TEXT,
+    follow_up_date DATE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- 2. CREATE PERFORMANCE INDEXES
 -- ------------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_appointments_clinic_date ON public.appointments(clinic_id, appointment_date, status);
 CREATE INDEX IF NOT EXISTS idx_schedules_clinic_day ON public.clinic_schedules(clinic_id, day_of_week);
 CREATE INDEX IF NOT EXISTS idx_blocked_clinic_date ON public.blocked_slots(clinic_id, block_date);
+CREATE INDEX IF NOT EXISTS idx_patient_records_phone ON public.patient_records(clinic_id, patient_phone);
+CREATE INDEX IF NOT EXISTS idx_patient_records_date ON public.patient_records(clinic_id, checkup_date);
 
 -- 3. ENABLE ROW LEVEL SECURITY (RLS)
 -- ------------------------------------------------------------------------------
@@ -79,6 +97,7 @@ ALTER TABLE public.clinics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clinic_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blocked_slots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.patient_records ENABLE ROW LEVEL SECURITY;
 
 -- 4. CLEAN UP EXISTING POLICIES (Makes script safe to run multiple times)
 -- ------------------------------------------------------------------------------
@@ -92,6 +111,10 @@ DROP POLICY IF EXISTS "Allow public insert appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Allow public update appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Allow public delete appointments" ON public.appointments;
 DROP POLICY IF EXISTS "Allow public all blocked_slots" ON public.blocked_slots;
+DROP POLICY IF EXISTS "Allow public read patient_records" ON public.patient_records;
+DROP POLICY IF EXISTS "Allow public insert patient_records" ON public.patient_records;
+DROP POLICY IF EXISTS "Allow public update patient_records" ON public.patient_records;
+DROP POLICY IF EXISTS "Allow public delete patient_records" ON public.patient_records;
 
 -- 5. DEFINE POLICIES
 -- ------------------------------------------------------------------------------
@@ -112,6 +135,12 @@ CREATE POLICY "Allow public delete appointments" ON public.appointments FOR DELE
 
 -- Blocked Slots Policies
 CREATE POLICY "Allow public all blocked_slots" ON public.blocked_slots FOR ALL USING (true) WITH CHECK (true);
+
+-- Patient Medical Records Policies
+CREATE POLICY "Allow public read patient_records" ON public.patient_records FOR SELECT USING (true);
+CREATE POLICY "Allow public insert patient_records" ON public.patient_records FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update patient_records" ON public.patient_records FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete patient_records" ON public.patient_records FOR DELETE USING (true);
 
 -- 6. INITIAL SEED DATA FOR SAI HOMOEO CLINIC (BARIDIH)
 -- ------------------------------------------------------------------------------

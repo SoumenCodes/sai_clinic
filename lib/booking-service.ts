@@ -18,6 +18,31 @@ export interface Appointment {
   created_at: string;
 }
 
+export interface PatientRecord {
+  id: string;
+  clinic_id?: string;
+  patient_phone: string; // Mandatory link
+  patient_name: string;
+  patient_age?: number;
+  checkup_date: string; // YYYY-MM-DD
+  diagnosis: string;
+  prescription_text?: string;
+  prescription_images?: string[]; // Array of base64 data URIs or image URLs
+  notes?: string;
+  follow_up_date?: string; // YYYY-MM-DD
+  created_at: string;
+}
+
+export interface PatientSummary {
+  phone: string;
+  name: string;
+  age?: number;
+  visitCount: number;
+  lastVisit: string;
+  latestDiagnosis?: string;
+  latestPrescription?: string;
+}
+
 export interface SlotInfo {
   startTime: string; // "10:00"
   endTime: string; // "10:15"
@@ -509,5 +534,344 @@ export async function deleteAppointment(id: string): Promise<boolean> {
   const all = getLocalAppointments();
   const filtered = all.filter((item) => item.id !== id);
   saveLocalAppointments(filtered);
+  return true;
+}
+
+// ==============================================================================
+// PATIENT MEDICAL HISTORY & PRESCRIPTION ENGINE
+// ==============================================================================
+
+export const LOCAL_STORAGE_RECORDS_KEY = "sai_clinic_patient_records_db";
+
+// Helper: Client-side image compression for mobile camera captures & uploads
+export async function compressImageFile(
+  file: File,
+  maxWidth: number = 1200,
+  maxHeight: number = 1200,
+  quality: number = 0.75
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("File is not an image"));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(e.target?.result as string);
+          return;
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(compressedDataUrl);
+      };
+      img.onerror = () => {
+        resolve(e.target?.result as string);
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Initial Mock Patient Records for Seamless Testing
+function getInitialMockRecords(): PatientRecord[] {
+  return [
+    {
+      id: "rec-1",
+      clinic_id: DEFAULT_CLINIC_UUID,
+      patient_phone: "9876543210",
+      patient_name: "Ramesh Sharma",
+      patient_age: 42,
+      checkup_date: "2026-08-15",
+      diagnosis: "Chronic Eczema & Skin Allergic Dermatitis",
+      prescription_text:
+        "1. Graphites 200 - 4 pills in morning empty stomach for 14 days\n2. Sulphur 30 - 4 pills at bedtime on alternate days\n3. Calendula Ointment - Apply locally on rashes twice daily",
+      prescription_images: [],
+      notes: "Patient reported intense itching aggravated by warmth and bathing. Advised to avoid synthetic fabrics and harsh chemical soaps.",
+      follow_up_date: "2026-09-11",
+      created_at: "2026-08-15T10:45:00.000Z",
+    },
+    {
+      id: "rec-2",
+      clinic_id: DEFAULT_CLINIC_UUID,
+      patient_phone: "9835123456",
+      patient_name: "Sunita Devi",
+      patient_age: 38,
+      checkup_date: "2026-08-20",
+      diagnosis: "Left Renal Calculus (6.2mm Kidney Stone) with Dysuria",
+      prescription_text:
+        "1. Berberis Vulgaris Q (Mother Tincture) - 15 drops in 1/2 glass lukewarm water thrice daily after meals\n2. Lycopodium 200 - 4 pills once daily at 5:00 PM\n3. Hydrangea Arborescens Q - 10 drops twice daily",
+      prescription_images: [],
+      notes: "Severe left flank pain radiating to groin. Advised 3.5 liters water daily. Restricted tomatoes, spinach, and high-oxalate foods. Repeat KUB USG after 4 weeks.",
+      follow_up_date: "2026-09-18",
+      created_at: "2026-08-20T18:30:00.000Z",
+    },
+  ];
+}
+
+// Local Storage Helpers for Patient Records
+function getLocalPatientRecords(): PatientRecord[] {
+  if (typeof window === "undefined") return getInitialMockRecords();
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_RECORDS_KEY);
+    if (!raw) {
+      const initial = getInitialMockRecords();
+      localStorage.setItem(LOCAL_STORAGE_RECORDS_KEY, JSON.stringify(initial));
+      return initial;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return getInitialMockRecords();
+  }
+}
+
+function saveLocalPatientRecords(records: PatientRecord[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LOCAL_STORAGE_RECORDS_KEY, JSON.stringify(records));
+  } catch (e) {
+    console.error("Failed to save patient records in local storage", e);
+  }
+}
+
+// Fetch Complete Medical History for a Patient by Phone Number
+export async function getPatientHistory(phone: string): Promise<PatientRecord[]> {
+  const cleanPhone = phone.replace(/\D/g, "").slice(-10); // Standardize 10-digit phone
+  let records: PatientRecord[] = [];
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("patient_records")
+        .select("*")
+        .eq("patient_phone", cleanPhone)
+        .order("checkup_date", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        return data;
+      }
+    } catch (err) {
+      console.warn("Supabase fetch patient history failed, falling back to local storage", err);
+    }
+  }
+
+  // Local storage fallback
+  const all = getLocalPatientRecords();
+  records = all.filter((r) => r.patient_phone.replace(/\D/g, "").slice(-10) === cleanPhone);
+
+  return records.sort((a, b) => {
+    if (a.checkup_date === b.checkup_date) {
+      return b.created_at.localeCompare(a.created_at);
+    }
+    return b.checkup_date.localeCompare(a.checkup_date);
+  });
+}
+
+// Fetch All Unique Patients Directory with their Summary & History Aggregated
+export async function getAllPatientsSummary(): Promise<PatientSummary[]> {
+  let allRecords: PatientRecord[] = [];
+  let allAppointments: Appointment[] = [];
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const [recordsRes, aptsRes] = await Promise.all([
+        supabase.from("patient_records").select("*").order("checkup_date", { ascending: false }),
+        supabase.from("appointments").select("*").order("appointment_date", { ascending: false }),
+      ]);
+
+      if (recordsRes.data) allRecords = recordsRes.data;
+      if (aptsRes.data) allAppointments = aptsRes.data;
+    } catch (e) {
+      console.warn("Supabase fetch summary failed, using local storage", e);
+    }
+  }
+
+  if (allRecords.length === 0) allRecords = getLocalPatientRecords();
+  if (allAppointments.length === 0) allAppointments = getLocalAppointments();
+
+  const patientsMap = new Map<string, PatientSummary>();
+
+  // 1. Process records
+  for (const rec of allRecords) {
+    const cleanPhone = rec.patient_phone.replace(/\D/g, "").slice(-10);
+    if (!cleanPhone) continue;
+
+    const existing = patientsMap.get(cleanPhone);
+    if (!existing) {
+      patientsMap.set(cleanPhone, {
+        phone: cleanPhone,
+        name: rec.patient_name,
+        age: rec.patient_age,
+        visitCount: 1,
+        lastVisit: rec.checkup_date,
+        latestDiagnosis: rec.diagnosis,
+        latestPrescription: rec.prescription_text,
+      });
+    } else {
+      existing.visitCount += 1;
+      if (rec.checkup_date > existing.lastVisit) {
+        existing.lastVisit = rec.checkup_date;
+        existing.latestDiagnosis = rec.diagnosis;
+        existing.latestPrescription = rec.prescription_text;
+      }
+    }
+  }
+
+  // 2. Process appointments to include patients who booked but have no recorded Rx yet
+  for (const apt of allAppointments) {
+    const cleanPhone = apt.patient_phone.replace(/\D/g, "").slice(-10);
+    if (!cleanPhone) continue;
+
+    const existing = patientsMap.get(cleanPhone);
+    if (!existing) {
+      patientsMap.set(cleanPhone, {
+        phone: cleanPhone,
+        name: apt.patient_name,
+        age: apt.patient_age,
+        visitCount: 0,
+        lastVisit: apt.appointment_date,
+        latestDiagnosis: apt.problem,
+      });
+    } else {
+      if (!existing.age && apt.patient_age) {
+        existing.age = apt.patient_age;
+      }
+    }
+  }
+
+  return Array.from(patientsMap.values()).sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
+}
+
+// Add a New Checkup / Prescription Record
+export async function addPatientRecord(
+  recordData: Omit<PatientRecord, "id" | "created_at">
+): Promise<{ success: boolean; record?: PatientRecord; error?: string }> {
+  const cleanPhone = recordData.patient_phone.replace(/\D/g, "").slice(-10);
+  if (!cleanPhone || cleanPhone.length < 8) {
+    return { success: false, error: "Patient phone number is required to save medical history." };
+  }
+  if (!recordData.patient_name || !recordData.patient_name.trim()) {
+    return { success: false, error: "Patient name is required." };
+  }
+
+  const newRecord: PatientRecord = {
+    id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `rec-${Date.now()}`,
+    clinic_id: recordData.clinic_id || DEFAULT_CLINIC_UUID,
+    patient_phone: cleanPhone,
+    patient_name: recordData.patient_name.trim(),
+    patient_age: recordData.patient_age ? Number(recordData.patient_age) : undefined,
+    checkup_date: recordData.checkup_date || getLocalDateString(),
+    diagnosis: recordData.diagnosis?.trim() || "Routine Checkup / Consultation",
+    prescription_text: recordData.prescription_text || "",
+    prescription_images: recordData.prescription_images || [],
+    notes: recordData.notes || "",
+    follow_up_date: recordData.follow_up_date || undefined,
+    created_at: new Date().toISOString(),
+  };
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("patient_records")
+        .insert({
+          clinic_id: newRecord.clinic_id,
+          patient_phone: newRecord.patient_phone,
+          patient_name: newRecord.patient_name,
+          patient_age: newRecord.patient_age,
+          checkup_date: newRecord.checkup_date,
+          diagnosis: newRecord.diagnosis,
+          prescription_text: newRecord.prescription_text,
+          prescription_images: newRecord.prescription_images,
+          notes: newRecord.notes,
+          follow_up_date: newRecord.follow_up_date,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        newRecord.id = data.id;
+      }
+    } catch (err) {
+      console.warn("Supabase insert patient record failed, falling back to local storage", err);
+    }
+  }
+
+  // Always sync to Local Storage
+  const all = getLocalPatientRecords();
+  all.unshift(newRecord);
+  saveLocalPatientRecords(all);
+
+  return { success: true, record: newRecord };
+}
+
+// Update an Existing Patient Record
+export async function updatePatientRecord(record: PatientRecord): Promise<boolean> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase
+        .from("patient_records")
+        .update({
+          patient_name: record.patient_name,
+          patient_age: record.patient_age,
+          checkup_date: record.checkup_date,
+          diagnosis: record.diagnosis,
+          prescription_text: record.prescription_text,
+          prescription_images: record.prescription_images,
+          notes: record.notes,
+          follow_up_date: record.follow_up_date,
+        })
+        .eq("id", record.id);
+    } catch (e) {
+      console.warn("Supabase update patient record failed", e);
+    }
+  }
+
+  const all = getLocalPatientRecords();
+  const updated = all.map((r) => (r.id === record.id ? record : r));
+  saveLocalPatientRecords(updated);
+  return true;
+}
+
+// Delete a Patient Record
+export async function deletePatientRecord(id: string): Promise<boolean> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from("patient_records").delete().eq("id", id);
+    } catch (e) {
+      console.warn("Supabase delete patient record failed", e);
+    }
+  }
+
+  const all = getLocalPatientRecords();
+  const filtered = all.filter((r) => r.id !== id);
+  saveLocalPatientRecords(filtered);
   return true;
 }
