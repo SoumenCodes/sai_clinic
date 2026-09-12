@@ -917,7 +917,7 @@ export default function DoctorPortalPage() {
             </span>
           </button>
 
-          {/* Patient History & Prescriptions Tab */}
+          {/* Patient Checkup & History Tab */}
           <button
             onClick={() => setActiveTab("history")}
             className={`px-3 sm:px-4 py-2 text-xs font-bold border-b-2 shrink-0 flex items-center gap-1.5 transition ${
@@ -927,10 +927,7 @@ export default function DoctorPortalPage() {
             }`}
           >
             <ClipboardList size={14} />
-            <span>
-              <span className="hidden sm:inline">Patient History &amp; Rx</span>
-              <span className="sm:hidden">History &amp; Rx</span>
-            </span>
+            <span>Checkup &amp; History</span>
             <span
               className={`px-1.5 py-0.5 rounded-md text-[10px] font-black leading-none ${
                 activeTab === "history"
@@ -1316,43 +1313,10 @@ export default function DoctorPortalPage() {
                       </div>
 
                       {/* Action Toolbar */}
-                      <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        {/* Direct Contact: Call & WhatsApp */}
-                        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
-                          <a
-                            href={`tel:${apt.patient_phone}`}
-                            className="h-8 sm:h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-900 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-2xs"
-                          >
-                            <Phone
-                              size={13}
-                              className="text-emerald-700 shrink-0"
-                            />
-                            <span className="truncate">
-                              {apt.patient_phone}
-                            </span>
-                          </a>
-
-                          <a
-                            href={`https://wa.me/91${apt.patient_phone.replace(/\D/g, "")}?text=Hello%20${encodeURIComponent(
-                              apt.patient_name,
-                            )},%20regarding%20your%20appointment%20at%20Sai%20Homoeo%20Clinic%20on%20${encodeURIComponent(
-                              formatDateDisplay(apt.appointment_date),
-                            )}%20at%20${encodeURIComponent(formatTime12h(apt.slot_start_time))}.`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="h-8 sm:h-9 px-3.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95"
-                          >
-                            <WhatsAppIcon
-                              size={14}
-                              className="text-white shrink-0"
-                            />
-                            <span>WhatsApp</span>
-                          </a>
-                        </div>
-
-                        {/* Status Toggles & Delete */}
-                        <div className="flex items-center justify-between sm:justify-end gap-1.5 pt-0.5 sm:pt-0">
-                          {/* Rx & History Button */}
+                      <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        {/* Left Group: Checkup & History + Direct Patient Contacts */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+                          {/* Main Action: Checkup & History */}
                           <button
                             onClick={() =>
                               handleOpenPatientHistory(
@@ -1362,22 +1326,60 @@ export default function DoctorPortalPage() {
                                 false,
                               )
                             }
-                            className="h-8 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center gap-1 transition active:scale-95 shadow-2xs"
-                            title="View Patient History & Prescriptions"
+                            className="w-full sm:w-auto h-9 px-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-xs"
+                            title="View Patient Checkup & History"
                           >
                             <ClipboardList
-                              size={13}
-                              className="text-emerald-700 shrink-0"
+                              size={14}
+                              className="text-emerald-200 shrink-0"
                             />
-                            <span>Rx &amp; History</span>
+                            <span>Checkup &amp; History</span>
                           </button>
 
+                          {/* Contact: Call & WhatsApp */}
+                          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+                            <a
+                              href={`tel:${apt.patient_phone}`}
+                              className="h-9 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-900 font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 shadow-2xs"
+                              title="Call Patient"
+                            >
+                              <Phone
+                                size={13}
+                                className="text-emerald-700 shrink-0"
+                              />
+                              <span className="truncate">
+                                {apt.patient_phone}
+                              </span>
+                            </a>
+
+                            <a
+                              href={`https://wa.me/91${apt.patient_phone.replace(/\D/g, "")}?text=Hello%20${encodeURIComponent(
+                                apt.patient_name,
+                              )},%20regarding%20your%20appointment%20at%20Sai%20Homoeo%20Clinic%20on%20${encodeURIComponent(
+                                formatDateDisplay(apt.appointment_date),
+                              )}%20at%20${encodeURIComponent(formatTime12h(apt.slot_start_time))}.`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="h-9 px-3.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95"
+                              title="WhatsApp Patient"
+                            >
+                              <WhatsAppIcon
+                                size={14}
+                                className="text-white shrink-0"
+                              />
+                              <span>WhatsApp</span>
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* Right Group: Status Toggles & Delete */}
+                        <div className="flex items-center justify-end gap-1.5 pt-1 sm:pt-0 border-t border-slate-100 sm:border-t-0">
                           {!isDone && (
                             <button
                               onClick={() =>
                                 handleStatusChange(apt.id, "completed")
                               }
-                              className="h-8 px-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 font-bold text-xs flex items-center gap-1 transition active:scale-95 flex-1 sm:flex-initial"
+                              className="h-8.5 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 font-bold text-xs flex items-center justify-center gap-1 transition active:scale-95 flex-1 sm:flex-initial"
                               title="Mark as Completed"
                             >
                               <CheckCircle2 size={13} />
@@ -1390,7 +1392,7 @@ export default function DoctorPortalPage() {
                               onClick={() =>
                                 handleStatusChange(apt.id, "cancelled")
                               }
-                              className="h-8 px-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-xs flex items-center gap-1 transition active:scale-95 flex-1 sm:flex-initial"
+                              className="h-8.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-xs flex items-center justify-center gap-1 transition active:scale-95 flex-1 sm:flex-initial"
                               title="Cancel Appointment"
                             >
                               <XCircle size={13} />
@@ -1400,7 +1402,7 @@ export default function DoctorPortalPage() {
 
                           <button
                             onClick={() => handleDelete(apt.id)}
-                            className="h-8 w-8 rounded-xl bg-red-50 hover:bg-red-100 hover:text-red-700 hover:border-red-200 border border-red-200 text-red-500 flex items-center justify-center transition active:scale-95 shrink-0"
+                            className="h-8.5 w-8.5 rounded-xl bg-red-50 hover:bg-red-100 hover:text-red-700 hover:border-red-200 border border-red-200 text-red-500 flex items-center justify-center transition active:scale-95 shrink-0"
                             title="Delete Permanently"
                           >
                             <Trash2 size={13} />
@@ -1426,13 +1428,13 @@ export default function DoctorPortalPage() {
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full">
                 <ClipboardList size={12} />
-                <span>ELECTRONIC MEDICAL RECORDS (EMR)</span>
+                <span>PATIENT RECORDS &amp; EMR</span>
               </div>
               <h2 className="text-base sm:text-xl font-black text-slate-900 tracking-tight">
-                Patient Medical History &amp; Prescriptions
+                Patient Checkup History &amp; Prescriptions
               </h2>
               <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
-                Search patients, view past clinical notes, digital prescriptions, and attached prescription &amp; lab report photos.
+                Search patients, view past clinical checkups, digital prescriptions, and attached paper Rx &amp; lab report photos.
               </p>
             </div>
 
@@ -1442,7 +1444,7 @@ export default function DoctorPortalPage() {
                 className="w-full md:w-auto px-4 py-3 sm:py-2.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-800 hover:to-teal-900 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md transition active:scale-95"
               >
                 <UserPlus size={15} />
-                <span>+ Walk-In / New Patient Rx</span>
+                <span>+ Walk-In / New Checkup</span>
               </button>
             </div>
           </div>
@@ -1555,7 +1557,7 @@ export default function DoctorPortalPage() {
                     No patient records recorded yet
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 leading-relaxed">
-                    Start by clicking on &quot;Rx &amp; History&quot; on any appointment card or click &quot;+ Walk-In / New Patient Rx&quot; above to create the first medical record.
+                    Start by clicking on &quot;Checkup &amp; History&quot; on any appointment card or click &quot;+ Walk-In / New Checkup&quot; above to create the first medical record.
                   </p>
                 </div>
                 <button
@@ -1681,10 +1683,10 @@ export default function DoctorPortalPage() {
                                   false,
                                 )
                               }
-                              className="h-8 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center justify-center gap-1 transition active:scale-95"
+                              className="h-8.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center justify-center gap-1 transition active:scale-95"
                             >
-                              <ClipboardList size={12} className="text-emerald-700 shrink-0" />
-                              <span>History</span>
+                              <ClipboardList size={13} className="text-emerald-700 shrink-0" />
+                              <span>Checkup &amp; History</span>
                             </button>
 
                             <button
@@ -1696,10 +1698,10 @@ export default function DoctorPortalPage() {
                                   true,
                                 )
                               }
-                              className="h-8 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs flex items-center justify-center gap-1 transition active:scale-95 shadow-2xs"
+                              className="h-8.5 px-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs flex items-center justify-center gap-1 transition active:scale-95 shadow-2xs"
                             >
                               <Plus size={13} />
-                              <span>+ New Rx</span>
+                              <span>+ New Checkup</span>
                             </button>
                           </div>
                         </div>
@@ -2155,7 +2157,7 @@ export default function DoctorPortalPage() {
                 }`}
               >
                 <History size={15} />
-                <span>Visit Timeline ({selectedPatientRecords.length})</span>
+                <span>Visit History ({selectedPatientRecords.length})</span>
               </button>
 
               <button
@@ -2167,7 +2169,7 @@ export default function DoctorPortalPage() {
                 }`}
               >
                 <Plus size={15} />
-                <span>+ Write Prescription</span>
+                <span>+ New Checkup &amp; Rx</span>
               </button>
             </div>
 

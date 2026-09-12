@@ -227,21 +227,22 @@ export default function HomePage() {
       return;
     }
 
-    const effectiveProblem =
-      patientData.problem === "Other"
-        ? customProblem.trim() || "Other Health Concern"
-        : patientData.problem;
+    // Commented out: age, health concern, and mode fields
+    // const effectiveProblem =
+    //   patientData.problem === "Other"
+    //     ? customProblem.trim() || "Other Health Concern"
+    //     : patientData.problem;
 
     setIsSubmitting(true);
     const res = await bookAppointment({
-      patient_name: patientData.name,
-      patient_phone: patientData.phone,
-      patient_age: patientData.age ? parseInt(patientData.age, 10) : undefined,
-      problem: effectiveProblem,
+      patient_name: patientData.name.trim(),
+      patient_phone: patientData.phone.trim(),
+      // patient_age: patientData.age ? parseInt(patientData.age, 10) : undefined,
+      problem: "General Consultation", // Default
       appointment_date: selectedDate,
       slot_start_time: selectedSlot.startTime,
       slot_end_time: selectedSlot.endTime,
-      consultation_mode: patientData.visitType,
+      consultation_mode: "in-clinic", // Default
     });
 
     setIsSubmitting(false);
@@ -260,15 +261,11 @@ export default function HomePage() {
   };
 
   const handleOpenWhatsAppBooking = () => {
-    const effectiveProblem =
-      patientData.problem === "Other"
-        ? customProblem.trim() || "Other Health Concern"
-        : patientData.problem;
     const slotLabel = selectedSlot
       ? `${selectedSlot.timeLabel} (${selectedSlot.displayLabel})`
       : "Preferred Slot";
     const formattedDate = formatDateDisplay(selectedDate);
-    const message = `Hello Sai Homoeo Clinic! I booked a 15-minute consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A🎂 *Age:* ${patientData.age || "N/A"}%0A🩺 *Health Concern:* ${effectiveProblem}%0A📅 *Date:* ${formattedDate}%0A⏰ *Time Slot:* ${slotLabel}%0A📍 *Mode:* ${patientData.visitType === "in-clinic" ? "In-Clinic (Baridih)" : "Online Consult"}%0A%0APlease confirm my appointment.`;
+    const message = `Hello Sai Homoeo Clinic! I booked a 15-minute consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A📅 *Date:* ${formattedDate}%0A⏰ *Time Slot:* ${slotLabel}%0A📍 *Location:* Sai Homoeo Clinic, Baridih%0A%0APlease confirm my appointment.`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
   };
 
@@ -293,7 +290,15 @@ export default function HomePage() {
               • Baridih, Jamshedpur
             </span>
           </div>
-          <div className="flex items-center gap-3 text-[11px] sm:text-xs shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs shrink-0">
+            <Link
+              href="/doctor"
+              className="flex items-center gap-1 text-emerald-200 hover:text-white transition font-bold bg-emerald-900/80 hover:bg-emerald-900 px-2 sm:px-2.5 py-0.5 rounded-full border border-emerald-700/80 text-[10px] sm:text-[11px]"
+              title="Doctor Management Portal"
+            >
+              <Lock size={11} className="text-emerald-400" />
+              <span>Doctor Login</span>
+            </Link>
             <a
               href={`tel:${CLINIC_PHONE.replace(/\s+/g, "")}`}
               className="flex items-center gap-1 text-emerald-300 hover:text-white transition font-semibold"
@@ -362,7 +367,16 @@ export default function HomePage() {
           </nav>
 
           {/* Header Action Buttons (Matching Height) */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2.5">
+            <Link
+              href="/doctor"
+              className="h-11 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs border border-slate-300 shadow-2xs transition flex items-center justify-center gap-1.5"
+              title="Doctor Management Portal"
+            >
+              <Lock size={14} className="text-emerald-800" />
+              <span>Doctor Login</span>
+            </Link>
+
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Sai%20Homoeo%20Clinic,%20I%20want%20to%20consult%20Dr.%20Sharma.`}
               target="_blank"
@@ -396,8 +410,8 @@ export default function HomePage() {
 
         {/* Mobile Dropdown Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-100 bg-white px-5 py-4 shadow-xl">
-            <div className="flex flex-col gap-3 font-semibold text-slate-800 text-sm">
+          <div className="lg:hidden border-t border-slate-100 bg-white px-5 py-4 shadow-xl space-y-3">
+            <div className="flex flex-col gap-2 font-semibold text-slate-800 text-sm">
               <a
                 href="#specialties"
                 onClick={() => setMobileMenuOpen(false)}
@@ -440,7 +454,24 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
+            {/* Doctor Login in Mobile Menu */}
+            <div className="pt-2">
+              <Link
+                href="/doctor"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full py-2.5 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-between shadow-xs transition"
+              >
+                <div className="flex items-center gap-2">
+                  <Lock size={14} className="text-emerald-400" />
+                  <span>Doctor Management Portal</span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded-md border border-emerald-800">
+                  Doctor Login &rarr;
+                </span>
+              </Link>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
               <a
                 href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Dr.%20Sharma,%20I%20want%20to%20consult%20at%20Sai%20Homoeo%20Clinic.`}
                 target="_blank"
@@ -1133,9 +1164,9 @@ export default function HomePage() {
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900">
                     Choose Date &amp; Available Slot
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  {/* <p className="text-xs text-slate-500">
                     Dr. S. K. Sharma • Shift 1: 10AM-2PM | Shift 2: 5PM-10PM
-                  </p>
+                  </p> */}
                 </div>
 
                 {bookingError && (
@@ -1324,33 +1355,41 @@ export default function HomePage() {
                             name: e.target.value,
                           })
                         }
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600 font-medium"
                       />
                     </div>
 
+                    <div>
+                      <label
+                        htmlFor={phoneInputId}
+                        className="block text-xs font-bold text-slate-800 mb-1"
+                      >
+                        Phone Number (Mandatory) *
+                      </label>
+                      <input
+                        id={phoneInputId}
+                        required
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={10}
+                        placeholder="e.g. 9876543210"
+                        value={patientData.phone}
+                        onChange={(e) =>
+                          setPatientData({
+                            ...patientData,
+                            phone: e.target.value.replace(/\D/g, ""),
+                          })
+                        }
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600 font-medium"
+                      />
+                    </div>
+
+                    {/* ========================================================= */}
+                    {/* OPTIONAL FIELDS COMMENTED OUT (Age, Health Concern, Mode) */}
+                    {/* Uncomment below if you want to re-enable them in future.   */}
+                    {/* ========================================================= */}
+                    {/*
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label
-                          htmlFor={phoneInputId}
-                          className="block text-xs font-bold text-slate-800 mb-1"
-                        >
-                          Phone Number (Mandatory) *
-                        </label>
-                        <input
-                          id={phoneInputId}
-                          required
-                          type="tel"
-                          placeholder="e.g. 9876543210"
-                          value={patientData.phone}
-                          onChange={(e) =>
-                            setPatientData({
-                              ...patientData,
-                              phone: e.target.value,
-                            })
-                          }
-                          className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-600"
-                        />
-                      </div>
                       <div>
                         <label
                           htmlFor={ageInputId}
@@ -1433,7 +1472,6 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    {/* Custom Health Concern if 'Other' selected */}
                     {patientData.problem === "Other" && (
                       <div className="pt-1">
                         <label
@@ -1453,6 +1491,7 @@ export default function HomePage() {
                         />
                       </div>
                     )}
+                    */}
                   </div>
 
                   <button
@@ -1507,11 +1546,21 @@ export default function HomePage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold text-slate-500">Phone:</span>
+                    <span className="font-semibold text-slate-500">
+                      Patient:
+                    </span>
                     <span className="font-bold text-slate-900">
-                      {patientData.phone}
+                      {patientData.name || "Patient"}
                     </span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-slate-500">Phone:</span>
+                    <span className="font-bold text-slate-900">
+                      +91 {patientData.phone}
+                    </span>
+                  </div>
+
+                  {/*
                   <div className="flex justify-between items-center">
                     <span className="font-semibold text-slate-500">
                       Concern:
@@ -1522,7 +1571,9 @@ export default function HomePage() {
                         : patientData.problem}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  */}
+
+                  <div className="flex justify-between items-center pt-1 border-t border-emerald-200/60">
                     <span className="font-semibold text-slate-500">
                       Clinic:
                     </span>
