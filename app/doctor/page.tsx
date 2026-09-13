@@ -2412,7 +2412,6 @@ export default function DoctorPortalPage() {
                       </label>
                       <input
                         type="number"
-                        placeholder="e.g. 42"
                         value={newPatientAge}
                         onChange={(e) => setNewPatientAge(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
@@ -2420,57 +2419,27 @@ export default function DoctorPortalPage() {
                     </div>
                   </div>
 
-                  {/* Diagnosis & Quick Tags */}
+                  {/* Diagnosis */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
                       Chief Complaints / Diagnosis
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Chronic Eczema & Skin Allergy, Left Kidney Stone, Gastric Acidity..."
                       value={newDiagnosis}
                       onChange={(e) => setNewDiagnosis(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
                       required
                     />
-
-                    {/* Quick Selection Tags */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:flex-wrap scrollbar-none mt-2">
-                      <span className="text-[10px] text-slate-400 font-semibold shrink-0">Quick Select:</span>
-                      {[
-                        "Chronic Eczema & Allergy",
-                        "Kidney Stones (Renal Calculus)",
-                        "Digestive & Liver Disorder",
-                        "Hair Loss & Dandruff",
-                        "Arthritic & Joint Pain",
-                        "Cough, Cold & Sinusitis",
-                        "Acidity & GERD",
-                      ].map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => setNewDiagnosis(tag)}
-                          className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-100 hover:text-emerald-950 text-slate-700 text-[10px] font-semibold transition border border-slate-200 shrink-0"
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
                   </div>
 
                   {/* Prescription Text */}
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-bold text-slate-700">
-                        Prescription (Rx) — Homeopathic Medicines &amp; Dosages
-                      </label>
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        (e.g. Medicine Name, Potency, Dosage, Timing)
-                      </span>
-                    </div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Prescription (Rx) — Homeopathic Medicines &amp; Dosages
+                    </label>
                     <textarea
                       rows={4}
-                      placeholder="1. Graphites 200 - 4 pills morning empty stomach&#10;2. Sulphur 30 - 4 pills at bedtime alternate days&#10;3. Calendula Ointment - Apply locally twice daily"
                       value={newPrescriptionText}
                       onChange={(e) => setNewPrescriptionText(e.target.value)}
                       className="w-full p-3 rounded-xl border border-slate-300 text-xs font-mono font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 leading-relaxed"
@@ -2575,7 +2544,6 @@ export default function DoctorPortalPage() {
                       </label>
                       <textarea
                         rows={2}
-                        placeholder="e.g. Avoid sour foods, drink 3 liters water, report in 2 weeks..."
                         value={newNotes}
                         onChange={(e) => setNewNotes(e.target.value)}
                         className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
@@ -2662,7 +2630,6 @@ export default function DoctorPortalPage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Rahul Kumar Verma"
                   value={walkInName}
                   onChange={(e) => setWalkInName(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
@@ -2678,7 +2645,6 @@ export default function DoctorPortalPage() {
                   type="tel"
                   inputMode="numeric"
                   maxLength={10}
-                  placeholder="e.g. 9876543210"
                   value={walkInPhone}
                   onChange={(e) => setWalkInPhone(e.target.value.replace(/\D/g, ""))}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
@@ -2692,7 +2658,6 @@ export default function DoctorPortalPage() {
                 </label>
                 <input
                   type="number"
-                  placeholder="e.g. 35"
                   value={walkInAge}
                   onChange={(e) => setWalkInAge(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
