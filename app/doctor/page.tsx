@@ -102,12 +102,12 @@ function WhatsAppIcon({
 }
 
 // Authentication Storage Keys
-const AUTH_SESSION_KEY = "sai_doctor_auth_session";
-const CUSTOM_CREDS_KEY = "sai_doctor_custom_credentials";
+const AUTH_SESSION_KEY = "mahalaxmi_doctor_auth_session";
+const CUSTOM_CREDS_KEY = "mahalaxmi_doctor_custom_credentials";
 
 // Default Doctor Credentials
-const DEFAULT_DOCTOR_PHONE = "9876543210";
-const DEFAULT_DOCTOR_PASS = "sai123";
+const DEFAULT_DOCTOR_PHONE = "9431179777";
+const DEFAULT_DOCTOR_PASS = "maha123";
 
 export default function DoctorPortalPage() {
   // Authentication State
@@ -533,8 +533,8 @@ export default function DoctorPortalPage() {
     const ageStr = record.patient_age ? ` (${record.patient_age} yrs)` : "";
     const dateFormatted = formatDateDisplay(record.checkup_date);
 
-    let message = `🌿 *SAI HOMOEO CLINIC - PRESCRIPTION*\n`;
-    message += `👨‍⚕️ *Dr. S. K. Sharma* (B.H.M.S)\n`;
+    let message = `🌿 *MAHALAXMI HOMOEO CLINIC - PRESCRIPTION*\n`;
+    message += `👨‍⚕️ *Dr. Santosh Jha* (B.H.M.S)\n`;
     message += `----------------------------------------\n`;
     message += `👤 *Patient:* ${record.patient_name}${ageStr}\n`;
     message += `📅 *Date:* ${dateFormatted}\n`;
@@ -553,8 +553,8 @@ export default function DoctorPortalPage() {
     }
 
     message += `----------------------------------------\n`;
-    message += `📍 *Sai Homoeo Clinic*, Near Ramni Kali Mandir, Baridih, Jamshedpur\n`;
-    message += `📞 *Helpline / Appointments:* +91 94313 43718 / +91 98765 43210\n`;
+    message += `📍 *Mahalaxmi Homeo Clinic*, New Sector Market, Telco Colony, Jamshedpur\n`;
+    message += `📞 *Helpline / Appointments:* +91 94311 79777\n`;
     message += `_Take medicines in clean mouth, 15 mins before or after meals._`;
 
     const encoded = encodeURIComponent(message);
@@ -680,7 +680,7 @@ export default function DoctorPortalPage() {
 
                 <div>
                   <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    Sai Homoeo Clinic
+                    Mahalaxmi Homeo Clinic
                   </h1>
                   <span className="inline-block mt-1 text-[10px] uppercase font-extrabold tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
                     Doctor Portal Access
@@ -736,7 +736,7 @@ export default function DoctorPortalPage() {
                         type="tel"
                         inputMode="numeric"
                         maxLength={10}
-                        placeholder="9876543210"
+                        placeholder="9431179777"
                         value={loginPhone}
                         onChange={(e) =>
                           setLoginPhone(e.target.value.replace(/\D/g, ""))
@@ -819,7 +819,7 @@ export default function DoctorPortalPage() {
                   className="w-full py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-emerald-800 flex items-center justify-center gap-2 transition"
                 >
                   <Sparkles size={13} className="text-emerald-600" />
-                  <span>1-Click Auto Fill: 9876543210 • sai123</span>
+                  <span>1-Click Auto Fill: 9431179777 • maha123</span>
                 </button>
               </div>
             </div>
@@ -828,7 +828,7 @@ export default function DoctorPortalPage() {
 
         {/* Footer info */}
         <div className="text-center text-[11px] text-slate-500 pb-2">
-          Sai Homoeo Clinic • Baridih, Jamshedpur • Confidential Portal Access
+          Mahalaxmi Homeo Clinic • Telco, Jamshedpur • Confidential Portal Access
         </div>
       </div>
     );
@@ -855,7 +855,7 @@ export default function DoctorPortalPage() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm sm:text-base font-extrabold text-white truncate">
-                  Sai Homoeo Clinic
+                  Mahalaxmi Homeo Clinic
                 </span>
                 <span className="hidden md:inline-flex items-center gap-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full shrink-0">
                   <ShieldCheck size={11} />
@@ -863,7 +863,7 @@ export default function DoctorPortalPage() {
                 </span>
               </div>
               <p className="hidden sm:block text-[11px] text-slate-400 truncate">
-                Baridih, Jamshedpur • 15-Minute Slot Management
+                Telco, Jamshedpur • 15-Minute Slot Management
               </p>
             </div>
           </div>
@@ -1355,7 +1355,7 @@ export default function DoctorPortalPage() {
                             <a
                               href={`https://wa.me/91${apt.patient_phone.replace(/\D/g, "")}?text=Hello%20${encodeURIComponent(
                                 apt.patient_name,
-                              )},%20regarding%20your%20appointment%20at%20Sai%20Homoeo%20Clinic%20on%20${encodeURIComponent(
+                              )},%20regarding%20your%20appointment%20at%20Mahalaxmi%20Homeo%20Clinic%20on%20${encodeURIComponent(
                                 formatDateDisplay(apt.appointment_date),
                               )}%20at%20${encodeURIComponent(formatTime12h(apt.slot_start_time))}.`}
                               target="_blank"
@@ -1662,7 +1662,7 @@ export default function DoctorPortalPage() {
                             <a
                               href={`https://wa.me/91${patient.phone}?text=Hello%20${encodeURIComponent(
                                 patient.name,
-                              )},%20from%20Dr.%20S.%20K.%20Sharma%20at%20Sai%20Homoeo%20Clinic.`}
+                              )},%20from%20Dr.%20Santosh%20Jha%20at%20Mahalaxmi%20Homeo%20Clinic.`}
                               target="_blank"
                               rel="noreferrer"
                               className="h-8 px-2.5 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] text-xs font-bold flex items-center justify-center gap-1.5 transition active:scale-95"
@@ -1942,7 +1942,7 @@ export default function DoctorPortalPage() {
                   type="tel"
                   inputMode="numeric"
                   maxLength={10}
-                  placeholder="e.g. 9876543210"
+                  placeholder="e.g. 9431179777"
                   value={newPhone}
                   onChange={(e) =>
                     setNewPhone(e.target.value.replace(/\D/g, ""))
@@ -2068,8 +2068,8 @@ export default function DoctorPortalPage() {
                 </p>
                 <p className="text-[11px] text-emerald-800 font-semibold">
                   ✓ It automatically creates tables, unique 15-minute slot
-                  collision constraints, RLS policies, and seed data for Sai
-                  Homoeo Clinic!
+                  collision constraints, RLS policies, and seed data for Mahalaxmi
+                  Homeo Clinic!
                 </p>
               </div>
             </div>
@@ -2233,7 +2233,7 @@ export default function DoctorPortalPage() {
                                   <span>{formatDateDisplay(rec.checkup_date)}</span>
                                 </div>
                                 <span className="text-[11px] text-slate-400 font-medium">
-                                  Dr. S. K. Sharma
+                                  Dr. Santosh Jha
                                 </span>
                               </div>
 
@@ -2705,7 +2705,7 @@ export default function DoctorPortalPage() {
               <div className="flex items-center gap-2">
                 <a
                   href={zoomImageSrc}
-                  download="sai-prescription.jpg"
+                  download="mahalaxmi-prescription.jpg"
                   className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold flex items-center gap-1 transition"
                   title="Download Image"
                 >
@@ -2743,22 +2743,22 @@ export default function DoctorPortalPage() {
           <div className="border-b-2 border-emerald-900 pb-4 mb-6 flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-black text-emerald-950 font-sans tracking-tight">
-                SAI HOMOEO CLINIC
+                MAHALAXMI HOMOEO CLINIC
               </h1>
               <p className="text-xs font-semibold text-slate-700">
                 Classical Homoeopathy &amp; Dispensary
               </p>
               <p className="text-xs text-slate-600 mt-1">
-                Near Ramni Kali Mandir, Baridih, Jamshedpur - 831017, Jharkhand
+                New Sector Market, Telco Colony, Jamshedpur - 831004, Jharkhand
               </p>
               <p className="text-xs text-slate-600 font-sans font-bold">
-                Phone: +91 94313 43718 / +91 98765 43210
+                Phone: +91 94311 79777
               </p>
             </div>
 
             <div className="text-right">
               <h2 className="text-base font-black text-slate-900 font-sans">
-                Dr. S. K. Sharma
+                Dr. Santosh Jha
               </h2>
               <p className="text-xs font-semibold text-slate-700">
                 B.H.M.S (Classical Homoeopathy)

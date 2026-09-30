@@ -40,16 +40,16 @@ import {
   getTomorrowDateString,
 } from "@/lib/booking-service";
 
-const CLINIC_NAME = "Sai Homoeo Clinic";
-const DOCTOR_NAME = "Dr. S. K. Sharma";
+const CLINIC_NAME = "Mahalaxmi Homeo Clinic";
+const DOCTOR_NAME = "Dr. Santosh Jha";
 const DOCTOR_DEGREE = "B.H.M.S (Classical Homoeopathy)";
 const CLINIC_ADDRESS =
-  "Near Ramni Kali Mandir, Baridih, Jamshedpur - 831017, Jharkhand";
-const CLINIC_PHONE = "+91 98765 43210";
-const WHATSAPP_NUMBER = "919876543210";
+  "New Sector Market, Telco Colony, Jamshedpur - 831004, Jharkhand";
+const CLINIC_PHONE = "+91 94311 79777";
+const WHATSAPP_NUMBER = "919431179777";
 
 const DIRECTIONS_URL =
-  "https://www.google.com/maps/search/?api=1&query=Sai+Homoeo+Clinic%2C+Near+Ramni+Kali+Mandir%2C+Baridih%2C+Jamshedpur%2C+Jharkhand+831017";
+  "https://maps.google.com/maps?vet=10CAAQoqAOahcKEwiIlN-z4JaXAxUAAAAAHQAAAAAQBg..i&rlz=1C1GCEA_enIN1208IN1208&udm&fvr=1&pvq=Cg0vZy8xMWZiMHIyZ2piIhwKFm1haGFsYXhtaSBob21lbyBjbGluaWMQAhgD&lqi=ChZtYWhhbGF4bWkgaG9tZW8gY2xpbmljSIr0xIuorYCACFouEAAQARACGAAYARgCIhZtYWhhbGF4bWkgaG9tZW8gY2xpbmljKggIAhAAEAEQApIBBmRvY3Rvcg&cs=1&um=1&ie=UTF-8&fb=1&gl=in&sa=X&ftid=0x39f5e362d148a723:0x49ea0dc221c10eea";
 
 function WhatsAppIcon({
   size = 20,
@@ -127,11 +127,11 @@ const FAQS = [
   },
   {
     q: "Are genuine German dilutions used at the clinic?",
-    a: "Yes. Sai Homoeo Clinic maintains an authentic in-house dispensary stocked with original Dr. Willmar Schwabe Germany, Reckeweg, Adel, and SBL potencies.",
+    a: "Yes. Mahalaxmi Homeo Clinic maintains an authentic in-house dispensary stocked with original Dr. Willmar Schwabe Germany, Reckeweg, Adel, and SBL potencies.",
   },
   {
     q: "How can I book an appointment or consult the doctor?",
-    a: "You can easily select your date and 15-minute time slot using the Book button or message Dr. Sharma directly on WhatsApp for instant confirmation.",
+    a: "You can easily select your date and 15-minute time slot using the Book button or message Dr. Santosh Jha directly on WhatsApp for instant confirmation.",
   },
 ];
 
@@ -265,7 +265,7 @@ export default function HomePage() {
       ? `${selectedSlot.timeLabel} (${selectedSlot.displayLabel})`
       : "Preferred Slot";
     const formattedDate = formatDateDisplay(selectedDate);
-    const message = `Hello Sai Homoeo Clinic! I booked a 15-minute consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A📅 *Date:* ${formattedDate}%0A⏰ *Time Slot:* ${slotLabel}%0A📍 *Location:* Sai Homoeo Clinic, Baridih%0A%0APlease confirm my appointment.`;
+    const message = `Hello Mahalaxmi Homeo Clinic! I booked a 15-minute consultation:%0A%0A👤 *Patient Name:* ${patientData.name || "Patient"}%0A📞 *Phone:* ${patientData.phone || "N/A"}%0A📅 *Date:* ${formattedDate}%0A⏰ *Time Slot:* ${slotLabel}%0A📍 *Location:* Mahalaxmi Homeo Clinic, Telco%0A%0APlease confirm my appointment.`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, "_blank");
   };
 
@@ -287,7 +287,7 @@ export default function HomePage() {
               10 AM–2 PM &amp; 5 PM–10 PM
             </span>
             <span className="text-emerald-300 font-medium hidden md:inline">
-              • Baridih, Jamshedpur
+              • Telco, Jamshedpur
             </span>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs shrink-0">
@@ -314,7 +314,7 @@ export default function HomePage() {
               className="hidden md:flex items-center gap-1 text-amber-300 hover:text-amber-200 font-bold transition"
             >
               <MapPin size={12} />
-              <span>Near Ramni Kali Mandir</span>
+              <span>New Sector Market, Telco</span>
             </a>
           </div>
         </div>
@@ -332,13 +332,13 @@ export default function HomePage() {
             </div>
             <div>
               <div className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight leading-none">
-                Sai Homoeo <span className="text-emerald-700">Clinic</span>
+                Mahalaxmi <span className="text-emerald-700">Homeo Clinic</span>
               </div>
               <div className="text-[10px] sm:text-[11px] font-semibold text-emerald-700 uppercase tracking-wider mt-0.5 flex items-center gap-1.5 flex-wrap">
                 <span>Classical Homoeopathy</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
                 <span className="text-slate-500 font-normal hidden sm:inline-block">
-                  Baridih, Jamshedpur
+                  Telco, Jamshedpur
                 </span>
               </div>
             </div>
@@ -353,13 +353,13 @@ export default function HomePage() {
               Treatments
             </a>
             <a href="#dispensary" className="hover:text-emerald-700 transition">
-              Dispensary &amp; Medicines
+              Dispensary
             </a>
             <a href="#doctor" className="hover:text-emerald-700 transition">
-              About Doctor
+              Doctor
             </a>
             <a href="#location" className="hover:text-emerald-700 transition">
-              Timings &amp; Map
+              Timings
             </a>
             <a href="#faq" className="hover:text-emerald-700 transition">
               FAQs
@@ -378,7 +378,7 @@ export default function HomePage() {
             </Link>
 
             <a
-              href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Sai%20Homoeo%20Clinic,%20I%20want%20to%20consult%20Dr.%20Sharma.`}
+              href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Mahalaxmi%20Homeo%20Clinic,%20I%20want%20to%20consult%20Dr.%20Santosh%20Jha.`}
               target="_blank"
               rel="noreferrer"
               className="h-11 px-4 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs shadow-md shadow-emerald-900/10 transition flex items-center justify-center gap-2"
@@ -473,7 +473,7 @@ export default function HomePage() {
 
             <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2">
               <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Dr.%20Sharma,%20I%20want%20to%20consult%20at%20Sai%20Homoeo%20Clinic.`}
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Dr.%20Santosh%20Jha,%20I%20want%20to%20consult%20at%20Mahalaxmi%20Homeo%20Clinic.`}
                 target="_blank"
                 rel="noreferrer"
                 className="h-11 rounded-xl bg-[#25D366] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md"
@@ -511,7 +511,7 @@ export default function HomePage() {
                   <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-xl sm:shadow-2xl border-2 sm:border-4 border-white">
                     <img
                       src="/doctor-sitting-desk.jpg"
-                      alt="Dr. S. K. Sharma consulting at Sai Homoeo Clinic desk"
+                      alt="Dr. Santosh Jha consulting at Mahalaxmi Homeo Clinic desk"
                       className="w-full aspect-[4/3] sm:aspect-auto object-cover object-center"
                     />
 
@@ -527,7 +527,7 @@ export default function HomePage() {
                         {DOCTOR_NAME}
                       </h3>
                       <p className="text-[11px] sm:text-xs text-emerald-200 font-medium">
-                        {DOCTOR_DEGREE} • Sai Homoeo Clinic
+                        {DOCTOR_DEGREE} • Mahalaxmi Homeo Clinic
                       </p>
                     </div>
                   </div>
@@ -540,10 +540,10 @@ export default function HomePage() {
                       </div>
                       <div>
                         <div className="text-xs font-bold text-slate-900 leading-tight">
-                          Near Ramni Kali Mandir
+                          New Sector Market
                         </div>
                         <div className="text-[10px] text-slate-500">
-                          Baridih, Jamshedpur
+                          Telco, Jamshedpur
                         </div>
                       </div>
                     </div>
@@ -623,7 +623,7 @@ export default function HomePage() {
                   </button>
 
                   <a
-                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Dr.%20Sharma,%20I%20would%20like%20to%20consult%20regarding%20treatment.`}
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Dr.%20Santosh%20Jha,%20I%20would%20like%20to%20consult%20regarding%20treatment.`}
                     target="_blank"
                     rel="noreferrer"
                     className="h-12 sm:h-14 sm:min-w-[200px] px-5 sm:px-6 rounded-xl sm:rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-green-900/15 hover:shadow-xl transition flex items-center justify-center gap-2 active:scale-98"
@@ -783,7 +783,7 @@ export default function HomePage() {
                     className="w-full sm:w-auto h-11 sm:h-12 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition flex items-center justify-center gap-2"
                   >
                     <Navigation size={15} />
-                    <span>Visit Dispensary at Baridih</span>
+                    <span>Visit Dispensary at Telco</span>
                   </a>
                 </div>
               </div>
@@ -793,7 +793,7 @@ export default function HomePage() {
                 <div className="rounded-xl sm:rounded-2xl overflow-hidden border border-slate-700 sm:border-2 shadow-xl bg-slate-800">
                   <img
                     src="/sai-homoeo-clinic-baridih-jamshedpur-s377ozkvkh 4.jpg"
-                    alt="Sai Homoeo Clinic Dispensary Medicines"
+                    alt="Mahalaxmi Homeo Clinic Dispensary Medicines"
                     className="w-full aspect-[4/3] sm:h-64 object-cover"
                   />
                   <div className="p-2 sm:p-3 bg-slate-900/90 text-[10px] sm:text-[11px] font-semibold text-slate-300 text-center sm:text-left truncate">
@@ -829,13 +829,13 @@ export default function HomePage() {
                   <div className="aspect-square rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl border-4 border-slate-100 bg-emerald-900 relative">
                     <img
                       src="/doctor-portrait.jpg"
-                      alt="Dr. S. K. Sharma Classical Homoeopath"
+                      alt="Dr. Santosh Jha Classical Homoeopath"
                       className="w-full h-full object-cover object-top"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none"></div>
                     <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 text-white">
                       <div className="text-xs sm:text-sm font-bold text-emerald-300">
-                        Sai Homoeo Clinic • Baridih
+                        Mahalaxmi Homeo Clinic • Telco
                       </div>
                       <div className="text-base sm:text-lg font-black">
                         {DOCTOR_NAME}
@@ -859,9 +859,9 @@ export default function HomePage() {
                 </p>
 
                 <p className="text-slate-600 text-xs sm:text-base leading-relaxed">
-                  "Every patient is unique. At Sai Homoeo Clinic, we take the
-                  time to understand your complete case history to prescribe the
-                  precise constitutional simillimum that brings permanent
+                  "Every patient is unique. At Mahalaxmi Homeo Clinic, we take
+                  the time to understand your complete case history to prescribe
+                  the precise constitutional simillimum that brings permanent
                   healing."
                 </p>
 
@@ -922,7 +922,7 @@ export default function HomePage() {
                     <span>CLINIC LOCATION &amp; TIMINGS</span>
                   </div>
                   <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-3 sm:mb-4">
-                    Easy to Reach in Baridih
+                    Easy to Reach in Telco
                   </h2>
 
                   {/* Address Card */}
@@ -942,7 +942,7 @@ export default function HomePage() {
                           {CLINIC_ADDRESS}
                         </p>
                         <div className="mt-2 inline-flex items-center gap-1 text-[11px] sm:text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded">
-                          <span>Landmark:</span> Near Ramni Kali Mandir
+                          <span>Landmark:</span> New Sector Market, Telco
                         </div>
                       </div>
                     </div>
@@ -999,14 +999,14 @@ export default function HomePage() {
                   {CLINIC_NAME}
                 </h3>
                 <p className="text-[11px] sm:text-xs text-slate-300 mt-1 max-w-sm">
-                  Near Ramni Kali Mandir, Baridih Main Road, Jamshedpur - 831017
+                  New Sector Market, Telco Colony, Jamshedpur - 831004
                 </p>
                 <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
                   <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-                    From Sakchi ~12 Mins
+                    From Sakchi ~15 Mins
                   </span>
                   <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-                    From Telco ~8 Mins
+                    From Baridih ~10 Mins
                   </span>
                 </div>
               </div>
@@ -1068,14 +1068,16 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <div className="font-bold text-white text-sm">
-              Sai Homoeo Clinic
+              Mahalaxmi Homeo Clinic
             </div>
             <div className="text-[11px] text-slate-500 mt-0.5">
-              Near Ramni Kali Mandir, Baridih, Jamshedpur - 831017, Jharkhand
+              New Sector Market, Telco Colony, Jamshedpur - 831004, Jharkhand
             </div>
           </div>
           <div className="flex items-center gap-4 text-[11px] text-slate-500">
-            <span>&copy; {new Date().getFullYear()} Sai Homoeo Clinic.</span>
+            <span>
+              &copy; {new Date().getFullYear()} Mahalaxmi Homeo Clinic.
+            </span>
             <span>•</span>
             <Link
               href="/doctor"
@@ -1104,7 +1106,7 @@ export default function HomePage() {
         </a>
 
         <a
-          href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Dr.%20Sharma,%20I%20want%20to%20consult%20at%20Sai%20Homoeo%20Clinic.`}
+          href={`https://wa.me/${WHATSAPP_NUMBER}?text=Hello%20Dr.%20Santosh%20Jha,%20I%20want%20to%20consult%20at%20Mahalaxmi%20Homeo%20Clinic.`}
           target="_blank"
           rel="noreferrer"
           className="flex-1 h-11 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex flex-col items-center justify-center gap-0.5 shadow-xs active:scale-95 transition"
@@ -1165,7 +1167,7 @@ export default function HomePage() {
                     Choose Date &amp; Available Slot
                   </h3>
                   {/* <p className="text-xs text-slate-500">
-                    Dr. S. K. Sharma • Shift 1: 10AM-2PM | Shift 2: 5PM-10PM
+                    Dr. Santosh Jha • Shift 1: 10AM-2PM | Shift 2: 5PM-10PM
                   </p> */}
                 </div>
 
@@ -1372,7 +1374,7 @@ export default function HomePage() {
                         type="tel"
                         inputMode="numeric"
                         maxLength={10}
-                        placeholder="e.g. 9876543210"
+                        placeholder="e.g. 9431179777"
                         value={patientData.phone}
                         onChange={(e) =>
                           setPatientData({
@@ -1463,7 +1465,7 @@ export default function HomePage() {
                           className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-slate-50 font-medium"
                         >
                           <option value="in-clinic">
-                            In-Clinic Visit (Baridih)
+                            In-Clinic Visit (Telco)
                           </option>
                           <option value="online">
                             Online WhatsApp Consult
@@ -1578,7 +1580,7 @@ export default function HomePage() {
                       Clinic:
                     </span>
                     <span className="font-bold text-slate-900">
-                      Sai Homoeo Clinic, Baridih
+                      Mahalaxmi Homeo Clinic, Telco
                     </span>
                   </div>
                 </div>
@@ -1589,7 +1591,7 @@ export default function HomePage() {
                     className="w-full h-13 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-black text-sm flex items-center justify-center gap-2 shadow-md transition"
                   >
                     <WhatsAppIcon size={20} className="text-white" />
-                    <span>Send Details to Dr. Sharma on WhatsApp</span>
+                    <span>Send Details to Dr. Santosh Jha on WhatsApp</span>
                   </button>
 
                   <button

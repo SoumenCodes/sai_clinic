@@ -3,17 +3,18 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sai Homoeo Clinic | Dr. S. K. Sharma (B.H.M.S) | Baridih, Jamshedpur",
+  title: "Mahalaxmi Homeo Clinic | Dr. Santosh Jha (B.H.M.S) | Telco, Jamshedpur",
   description:
-    "Trusted Classical Homoeopathic Clinic in Baridih, Jamshedpur. Effective, safe, and natural treatment for chronic diseases, skin, hair, allergies, kidney stones & arthritis. Near Ramni Kali Mandir.",
+    "Trusted Classical Homoeopathic Clinic in Telco, Jamshedpur. Effective, safe, and natural treatment for chronic diseases, skin, hair, allergies, kidney stones & arthritis. New Sector Market, Telco Colony.",
   keywords: [
-    "Sai Homoeo Clinic",
-    "Homeopathy doctor Baridih Jamshedpur",
-    "Homoeopathic clinic near Ramni Kali Mandir",
+    "Mahalaxmi Homeo Clinic",
+    "Dr Santosh Jha",
+    "Homeopathy doctor Telco Jamshedpur",
+    "Homoeopathic clinic near New Sector Market",
     "Best homeopath in Jamshedpur",
     "Skin treatment homeopathy Jamshedpur",
     "Kidney stone homeopathy cure",
-    "Chronic disease homeopathy Baridih",
+    "Chronic disease homeopathy Telco",
   ],
 };
 
